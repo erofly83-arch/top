@@ -4699,7 +4699,7 @@ function getMatchViewList() {
 
 let _matchRenderedPairs = [];
 
-function renderMatcherTable() {
+function renderMatcherTable(preserveScroll) {
   const q = (document.getElementById('matcherSearchInp').value || '').toLowerCase().trim();
   const wrap = document.getElementById('matcherTableWrap');
   const empty = document.getElementById('matcherEmpty');
@@ -4789,8 +4789,12 @@ function renderMatcherTable() {
   }
 
   wrap._mvsRender = _mvsRenderMatcherRows;
-  wrap.scrollTop = 0;
+  const _savedMatchScroll = preserveScroll ? wrap.scrollTop : 0;
+  if (!preserveScroll) wrap.scrollTop = 0;
   _mvsRenderMatcherRows();
+  if (preserveScroll && _savedMatchScroll > 0) {
+    requestAnimationFrame(() => { wrap.scrollTop = _savedMatchScroll; });
+  }
 }
 
 document.getElementById('matcherTbody').addEventListener('click', function(e) {
@@ -5219,7 +5223,7 @@ function confirmMatchAction() {
   clearTimeout(rebuildBarcodeAliasFromJeDB._t);
   rebuildBarcodeAliasFromJeDB._t = setTimeout(function() { if (typeof allFilesData !== 'undefined' && allFilesData.length > 0) { processData(); renderTable(true); updateUI(); } }, 120);
   closeMatchModal();
-  renderMatcherTable();
+  renderMatcherTable(true);
   showToast('Добавлено в базу кросскодов', 'ok');
 }
 
@@ -5245,7 +5249,7 @@ function updateMatchPairTags() {
     r.bInDB = bc2key.has(String(r.bc2)); r.bKey = bc2key.get(String(r.bc2));
   }
   updateMatcherStats();
-  if (document.querySelector('.nav-tab[data-pane="matcher"].active')) renderMatcherTable();
+  if (document.querySelector('.nav-tab[data-pane="matcher"].active')) renderMatcherTable(true);
 }
 
 let jeDB = {};
