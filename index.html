@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Прайс-менеджер</title>
+<!-- ═══ PWA ═══ -->
+<link href="/manifest.json" rel="manifest"/>
+<meta content="#3B6FD4" name="theme-color"/>
+<meta content="yes" name="mobile-web-app-capable"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="Прайсы" name="apple-mobile-web-app-title"/>
+<link href="/icon-192.png" rel="apple-touch-icon"/>
+<link href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;rect width='100' height='100' rx='24' fill='%233B6FD4'/&gt;&lt;rect x='20' y='25' width='45' height='10' rx='5' fill='white'/&gt;&lt;rect x='20' y='45' width='30' height='10' rx='5' fill='white'/&gt;&lt;rect x='20' y='65' width='20' height='10' rx='5' fill='white'/&gt;&lt;circle cx='65' cy='55' r='14' fill='none' stroke='white' stroke-width='8'/&gt;&lt;line x1='75' y1='65' x2='85' y2='75' stroke='white' stroke-width='8' stroke-linecap='round'/&gt;&lt;/svg&gt;" rel="icon">
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="style.css" rel="stylesheet"/>
+<style>
+@keyframes _hc{0%,100%{transform:translateY(0);opacity:.25}50%{transform:translateY(-6px);opacity:1}}
+@keyframes _hg{0%,100%{box-shadow:0 2px 0 0 rgba(245,158,11,0)}60%{box-shadow:0 4px 18px rgba(245,158,11,.22),0 0 0 3px rgba(245,158,11,.07)}}
+@keyframes _hp{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+</head>
+<body>
+<!-- ═══ MOBILE TOP BAR — outside app-layout for full viewport width ═══ -->
+<div id="mobileTopBar">
+  <button id="mobileMenuBtn" onclick="toggleMobileSidebar()" title="Меню" aria-label="Открыть меню">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <div id="mobileTopBarBrand">
+    <div id="mobileTopBarBrandIcon">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect fill="white" height="10" rx="5" width="45" x="20" y="25"/>
+        <rect fill="white" height="10" rx="5" width="30" x="20" y="45"/>
+        <rect fill="white" height="10" rx="5" width="20" x="20" y="65"/>
+        <circle cx="65" cy="55" fill="none" r="14" stroke="white" stroke-width="8"/>
+        <line stroke="white" stroke-linecap="round" stroke-width="8" x1="75" x2="85" y1="65" y2="75"/>
+      </svg>
+    </div>
+  </div>
+  <div id="mobileTopBarTitle">Прайс-менеджер</div>
+</div>
+
+<!-- ═══ DESKTOP HINT POPUP (mobile only) ═══ -->
+<div id="desktopHintPopup">
+  <div class="dh-card">
+    <div class="dh-drag-handle"></div>
+    <div class="dh-body">
+      <div class="dh-icon-wrap">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 3H4a1 1 0 00-1 1v13a1 1 0 001 1h7v2H8v2h8v-2h-3v-2h7a1 1 0 001-1V4a1 1 0 00-1-1zm-1 13H5V5h14v11z"/>
+        </svg>
+      </div>
+      <div class="dh-title">Лучше на компьютере 💻</div>
+      <div class="dh-text">
+        Прайс-менеджер — инструмент для работы с таблицами и прайс-листами.<br>
+        <strong>На десктопе</strong> вы получите полный доступ ко всем функциям: загрузка файлов, мониторинг цен и работа с базой кросс-кодов.
+      </div>
+      <div class="dh-actions">
+        <button class="dh-btn-continue" onclick="closeDesktopHint()">Продолжить в браузере</button>
+        <button class="dh-btn-close" onclick="closeDesktopHint(true)">Больше не показывать</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SIDEBAR OVERLAY ═══ -->
+<div id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+
+<div class="app-layout">
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="app-sidebar">
+<div class="sidebar-brand" onclick="toggleSidebar()" style="cursor:pointer;" title="Свернуть/развернуть меню">
+<div class="sidebar-brand-icon">
+<svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<rect fill="white" height="10" rx="5" width="45" x="20" y="25"></rect>
+<rect fill="white" height="10" rx="5" width="30" x="20" y="45"></rect>
+<rect fill="white" height="10" rx="5" width="20" x="20" y="65"></rect>
+<circle cx="65" cy="55" fill="none" r="14" stroke="white" stroke-width="8"></circle>
+<line stroke="white" stroke-linecap="round" stroke-width="8" x1="75" x2="85" y1="65" y2="75"></line>
+</svg>
+</div>
+<div>
+<div class="sidebar-brand-text">Прайс-менеджер</div>
+<div class="sidebar-brand-sub">Мониторинг цен</div>
+</div>
+</div>
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Свернуть меню">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+</button>
+<nav class="sidebar-nav" id="appNav">
+<div class="sidebar-section-label">Работа</div>
+<button class="nav-tab active" data-label="Загрузка прайсов" data-pane="prepare" id="navPrepare">
+<span class="nav-tab-icon"><i data-lucide="upload"></i></span><span class="nav-tab-label"> Загрузка прайсов</span>
+</button>
+<button class="nav-tab" data-label="Мониторинг цен" data-pane="monitor" id="navMonitor">
+<span class="nav-tab-icon"><i data-lucide="bar-chart-2"></i></span><span class="nav-tab-label"> Мониторинг цен</span>
+</button>
+<div class="sidebar-section-label">База данных</div>
+<button class="nav-tab" data-label="Поиск кросскодов Beta" data-pane="matcher" id="navMatcher">
+<span class="nav-tab-icon"><i data-lucide="link-2"></i></span><span class="nav-tab-label"> Поиск кросскодов Beta</span>
+</button>
+<button class="nav-tab" data-label="База кросскодов" data-pane="jsoneditor" id="navJsoneditor">
+<span class="nav-tab-icon"><i data-lucide="database"></i></span><span class="nav-tab-label"> База кросскодов</span>
+</button>
+</nav>
+<!-- Информация о загруженных файлах -->
+<div class="sidebar-files-section" id="sidebarFilesSection">
+<div class="sidebar-files-title">Загруженные файлы</div>
+<!-- JSON файл -->
+<div class="sidebar-file-item sidebar-file-item--empty" id="sfJsonItem">
+<div class="sf-row">
+<span class="sf-name sf-name--accent" id="sfJsonName">Файл памяти не загружен</span>
+<span class="sf-meta-inline" id="sfJsonMeta" style="display:none;"></span>
+<button class="sf-supplier-del" id="sfJsonDel" style="display:none;" title="Удалить файл памяти" onclick="window.removeJsonFile()">✕</button>
+</div>
+</div>
+<!-- Мой прайс -->
+<div class="sidebar-file-item sidebar-file-item--empty" id="sfMyPriceItem">
+<div class="sf-row">
+<span class="sf-name sf-name--accent" id="sfMyPriceName">Мой прайс не загружен</span>
+<span class="sf-meta-inline" id="sfMyPriceMeta" style="display:none;"></span>
+<button class="sf-supplier-del" id="sfMyPriceDel" style="display:none;" title="Удалить Мой прайс" onclick="window.removeMyPriceFile()">✕</button>
+</div>
+</div>
+<!-- Поставщики -->
+<div class="sidebar-files-title" style="margin-top:6px;margin-bottom:4px;">Поставщики</div>
+<div class="sidebar-file-item sidebar-file-item--empty" id="sfSuppliersEmpty">
+<div class="sf-row">
+<span class="sf-icon"><i data-lucide="package"></i></span>
+<span class="sf-empty-label">Файлы поставщиков не загружены</span>
+</div>
+</div>
+<div class="sidebar-files-suppliers-list" id="sfSuppliersList" style="display:none;"></div>
+</div><!-- /sidebar-files-section -->
+<div class="sidebar-footer">
+<div class="unified-unsaved" id="unifiedUnsaved" title="Есть несохранённые изменения — скачайте файл памяти, чтобы не потерять данные">
+<button class="btn btn-success unified-unsaved-save-btn" onclick="downloadCurrentSynonyms()" title="Скачать файл памяти (JSON)"><i data-lucide="save"></i> Сохранить файл памяти</button>
+</div>
+<div class="sidebar-contact-block">
+<a class="sidebar-contact-card sidebar-contact-card--phone" href="tel:+79130998250" title="+7 913 099-82-50">
+<span class="sidebar-contact-card-icon">
+<svg fill="none" height="14" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C9.61 21 3 14.39 3 6a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z" fill="currentColor"/></svg>
+</span>
+<span class="sidebar-contact-card-text">+7 913 099-82-50</span>
+</a>
+<a class="sidebar-contact-card sidebar-contact-card--tg" href="https://t.me/vorontsov_dmitriy" rel="noopener" target="_blank" title="Telegram">
+<span class="sidebar-contact-card-icon">
+<svg height="14" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" fill="#0088cc" r="12"/><path d="M17.64 7.29l-2.07 9.75c-.15.68-.56.85-1.13.53l-3.13-2.3-1.51 1.45c-.17.17-.31.31-.62.31l.22-3.18 5.74-5.18c.25-.22-.05-.34-.39-.12L6.4 13.4 3.31 12.45c-.67-.21-.68-.67.14-.99l13.47-5.19c.56-.2 1.05.14.72.99v.03z" fill="white"/></svg>
+</span>
+<span class="sidebar-contact-card-text">Написать в Telegram</span>
+</a>
+<button class="sidebar-contact-card sidebar-contact-card--write" onclick="window.openFeedbackModal()">
+<span class="sidebar-contact-card-icon"><i data-lucide="bug" style="width:14px;height:14px;"></i></span>
+<span class="sidebar-contact-card-text">Отправить ошибку</span>
+</button>
+</div>
+<!-- PWA: кнопка установки (скрыта по умолчанию) -->
+<button id="errLogBtn" onclick="window.openErrLog()" style="display:none;width:calc(100% - 24px);margin:4px 12px 0;padding:7px 10px;background:#fff1f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;align-items:center;justify-content:center;gap:7px;transition:background .15s,border-color .15s;line-height:1;box-sizing:border-box;" onmouseover="this.style.background='#fee2e2';this.style.borderColor='#ef4444'" onmouseout="this.style.background='#fff1f2';this.style.borderColor='#fca5a5'" title="Открыть журнал ошибок">
+  Ошибки (<span id="errLogCount">0</span>)
+</button>
+<!-- Модальное окно журнала ошибок -->
+<div id="errLogModal" onclick="if(event.target===this)window.closeErrLog()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;width:min(680px,95vw);max-height:82vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #334155;background:#0f172a;">
+      
+      <div style="flex:1;">
+        <div style="font-family:'Inter',sans-serif;font-weight:700;color:#f1f5f9;font-size:15px;">Журнал ошибок</div>
+        <div style="font-family:'Inter',sans-serif;font-size:11px;color:#64748b;margin-top:1px;">Отправьте отчёт разработчику для исправления</div>
+      </div>
+      <button onclick="window.closeErrLog()" style="background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;transition:color .15s;" onmouseover="this.style.color='#f1f5f9'" onmouseout="this.style.color='#64748b'">✕</button>
+    </div>
+    <div id="errLogList" style="overflow-y:auto;flex:1;padding:14px 16px;font-family:'Courier New',monospace;font-size:11px;color:#e2e8f0;display:flex;flex-direction:column;gap:8px;">
+      <span style="color:#64748b;font-family:'Inter',sans-serif;">Ошибок нет</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:14px 16px;border-top:1px solid #334155;background:#0f172a;flex-wrap:wrap;">
+      <div style="font-family:'Inter',sans-serif;font-size:11px;color:#64748b;flex:1;min-width:120px;">Скопируйте или отправьте напрямую</div>
+      <button onclick="window.copyErrLog()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid #475569;background:#334155;color:#e2e8f0;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s,border-color .15s;" onmouseover="this.style.background='#475569'" onmouseout="this.style.background='#334155'">Скопировать отчёт</button>
+      <button onclick="window.sendErrToTelegram()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid #2563eb;background:#1d4ed8;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#1d4ed8'">Отправить в Telegram</button>
+      <button onclick="window.clearErrLog()" style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1px solid #475569;background:transparent;color:#64748b;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:color .15s,border-color .15s;" onmouseover="this.style.color='#ef4444';this.style.borderColor='#ef4444'" onmouseout="this.style.color='#64748b';this.style.borderColor='#475569'">Очистить</button>
+    </div>
+  </div>
+</div>
+<button id="pwaInstallBtn" onclick="pwaInstall()" onmouseout="this.style.opacity='1'" onmouseover="this.style.opacity='.85'" style="display:none;width:calc(100% - 24px);margin:4px 12px 0;padding:8px 10px;background:linear-gradient(135deg,#3B6FD4,#5B8FEF);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;align-items:center;justify-content:center;gap:7px;transition:opacity .2s;line-height:1;box-sizing:border-box;">
+<svg height="20" style="flex-shrink:0;" viewbox="0 0 100 100" width="20" xmlns="http://www.w3.org/2000/svg">
+<rect fill="white" height="10" rx="5" width="45" x="20" y="25"></rect>
+<rect fill="white" height="10" rx="5" width="30" x="20" y="45"></rect>
+<rect fill="white" height="10" rx="5" width="20" x="20" y="65"></rect>
+<circle cx="65" cy="55" fill="none" r="14" stroke="white" stroke-width="8"></circle>
+<line stroke="white" stroke-linecap="round" stroke-width="8" x1="75" x2="85" y1="65" y2="75"></line>
+</svg>
+        Установить приложение
+      </button>
+</div>
+</aside>
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="app-main">
+<!-- ═══ PANE: PREPARE (OBREZATEL) ═══ -->
+<div class="main-pane active" id="pane-prepare">
+<!-- Main editor container (always visible) -->
+<div class="obr-container" id="obrTableContainer">
+<!-- ═══ PANE TITLE ═══ -->
+<div class="obr-pane-title">
+<div class="pane-title-icon" style="background:var(--accent-bg);border:1px solid #C7D7F5;"><i data-lucide="upload"></i></div>
+<div class="pane-title-text">
+<h2 style="font-size:var(--fz-lg);font-weight:700;color:var(--text-primary);margin:0;line-height:1.2;">Загрузка прайсов</h2>
+<p style="font-size:var(--fz-xs);color:var(--text-muted);margin:2px 0 0;line-height:1.3;">Загрузите файлы, выберите и назовите нужные колонки, передайте в мониторинг</p>
+</div>
+<div class="pane-title-extra" id="obrHeaderActions" style="margin-left:auto;">
+<button class="btn btn-success" disabled="" id="obrHeaderArchiveBtn" title="Скачать все CSV, Excel и JSON одним архивом">
+<i data-lucide="archive"></i> Скачать всё архивом
+        </button>
+<button class="btn help-btn" id="helpBtnPrepare" onclick="openHelpModal('prepare')" title="Инструкция по работе с этой вкладкой"><i data-lucide="help-circle"></i></button>
+</div>
+</div>
+<!-- Loaded files list -->
+<div id="obr-loaded-files" style="display:none;padding:8px 14px;background:var(--surface-alt);border-bottom:1px solid var(--border);align-items:center;gap:8px;flex-wrap:wrap;">
+<span class="loaded-bar-label">Передано в мониторинг:</span>
+<div class="loaded-bar-list" id="obr-loaded-list"></div>
+</div>
+<!-- Hidden file inputs (JS references these) -->
+<div aria-hidden="true" style="display:none;">
+<input accept=".xlsx,.xls,.csv" id="obrFileInput" multiple="" type="file"/>
+<input accept=".xlsx,.xls,.csv" id="obrFileInputMyPrice" type="file"/>
+<input accept=".json" id="obrJsonUploadInput" type="file"/>
+</div>
+<!-- ═══ LICENSE KEY INPUT ═══ -->
+<div id="licKeyBar" style="padding:8px 14px 0;display:flex;align-items:flex-start;gap:8px;">
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:var(--fz-xs);font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">
+      Лицензионный ключ
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <textarea id="licKeyInput" rows="1"
+        placeholder='Вставьте ключ и нажмите «Применить»'
+        style="flex:1;padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-md);font-size:var(--fz-sm);font-family:'Inter',sans-serif;resize:none;outline:none;line-height:1.5;overflow:hidden;height:32px;transition:border-color 150ms,box-shadow 150ms;background:var(--surface);"
+        onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 2px rgba(59,111,212,.12)'"
+        onblur="this.style.borderColor='';this.style.boxShadow=''"></textarea>
+      <button class="btn btn-success" onclick="applyLicenseKeyFromInput()" style="flex-shrink:0;height:32px;">
+        <i data-lucide="key"></i> Применить
+      </button>
+      <button class="btn" onclick="window.switchUserConfirm()" style="flex-shrink:0;height:32px;color:var(--text-secondary);" title="Сбросить лицензию и данные — для смены пользователя или устройства">
+        <i data-lucide="log-out"></i>
+      </button>
+    </div>
+  </div>
+  <div id="licKeyStatus" style="display:none;flex-shrink:0;align-self:flex-end;padding-bottom:2px;"></div>
+</div>
+<!-- ═══ UPLOAD HEADER BAR ═══ -->
+<div class="obr-upload-header" id="obrUploadHeader">
+<div class="obr-upload-btns">
+<div class="obr-upload-card card-json" id="obrHeaderJsonWrap" title="Загрузить файл-память: разметка колонок и база кросскодов">
+<div class="obr-upload-card-top">
+<span class="obr-upload-card-icon"><i data-lucide="hard-drive"></i></span>
+<span class="obr-upload-card-title">Файл памяти</span>
+</div>
+<span class="obr-upload-card-hint">Настройки и кросскоды</span>
+<input accept=".json" id="obrClearedJsonInput" type="file"/>
+</div>
+<div class="obr-upload-card" id="obrHeaderMyPriceCard" data-card-icon="tag" title="Загрузить свой основной прайс-лист">
+<div class="obr-upload-card-top">
+<span class="obr-upload-card-icon"><i data-lucide="tag"></i></span>
+<span class="obr-upload-card-title">Мой прайс</span>
+</div>
+<span class="obr-upload-card-hint">Основной прайс-лист</span>
+<input accept=".xlsx,.xls,.csv" id="obrClearedFileInputMyPrice" type="file"/>
+</div>
+<div class="obr-upload-card" id="obrHeaderSupplierCard" data-card-icon="files" title="Загрузить один или несколько файлов поставщика">
+<div class="obr-upload-card-top">
+<span class="obr-upload-card-icon"><i data-lucide="files"></i></span>
+<span class="obr-upload-card-title">Прайсы</span>
+</div>
+<span class="obr-upload-card-hint">Один или несколько файлов</span>
+<input accept=".xlsx,.xls,.csv" id="obrClearedFileInput" multiple="" type="file"/>
+</div>
+<div class="obr-upload-cards-sep"></div>
+<div class="obr-upload-card card-danger" id="obrHeaderResetAllBtn" data-card-icon="trash-2" title="Очистить все загруженные данные и сбросить сессию">
+<div class="obr-upload-card-top">
+<span class="obr-upload-card-icon"><i data-lucide="trash-2"></i></span>
+<span class="obr-upload-card-title">Сбросить всё</span>
+</div>
+<span class="obr-upload-card-hint">Очистить все данные</span>
+</div>
+</div>
+<!-- ═══ HINT: загрузи файл памяти ═══ -->
+<div id="_priceCardsHint" style="display:none;flex:0 0 100%;margin-top:-2px;">
+<!-- треугольник-указатель на кнопку "Файл памяти" -->
+<div style="margin-left:47px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:9px solid #f59e0b;"></div>
+<div style="background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 60%,#fde68a 100%);border:1px solid #fde68a;border-top:2px solid #f59e0b;border-radius:0 var(--radius-md) var(--radius-md) var(--radius-md);padding:10px 14px 10px 0;display:flex;align-items:center;gap:0;animation:_hg 2.4s ease-in-out infinite;">
+  <!-- стрелки: колонка 110px выровнена по центру первой карточки -->
+  <div style="width:110px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;">
+    <svg width="24" height="14" viewBox="0 0 24 14" fill="none" style="animation:_hc 1s ease-in-out 0s infinite;"><polyline points="2,12 12,2 22,12" stroke="#d97706" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg width="24" height="14" viewBox="0 0 24 14" fill="none" style="animation:_hc 1s ease-in-out .22s infinite;"><polyline points="2,12 12,2 22,12" stroke="#f59e0b" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg width="24" height="14" viewBox="0 0 24 14" fill="none" style="animation:_hc 1s ease-in-out .44s infinite;"><polyline points="2,12 12,2 22,12" stroke="#fcd34d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <!-- текст -->
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:13px;font-weight:700;color:#92400e;line-height:1.3;font-family:'Inter',sans-serif;">Сначала загрузите файл памяти</div>
+    <div style="font-size:11px;color:#b45309;margin-top:3px;line-height:1.45;font-family:'Inter',sans-serif;">Настройки колонок, база штрихкодов и бренды восстановятся автоматически</div>
+  </div>
+  <!-- бейдж -->
+  <div style="flex-shrink:0;margin-left:14px;background:rgba(245,158,11,.12);border:1px solid #fde68a;border-radius:var(--radius-md);padding:7px 12px;text-align:center;animation:_hp 2.4s ease-in-out infinite;">
+    <div style="font-size:20px;line-height:1;"></div>
+    <div style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.6px;margin-top:3px;white-space:nowrap;">Первый шаг</div>
+  </div>
+</div>
+</div>
+</div>
+<!-- ══════ MARKETING + INSTRUCTION BLOCK ══════ -->
+<div id="obrAdvantagesBlock" style="padding:16px 16px 0;">
+<!-- MARKETING BLOCK -->
+<div class="marketing-hero">
+<div style="position:absolute;top:-20px;right:-20px;width:160px;height:160px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>
+<div style="position:absolute;bottom:-40px;right:60px;width:100px;height:100px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.55);margin-bottom:8px;">Мониторинг цен поставщиков</div>
+<div style="font-size:18px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px;">Сравнение прайсов поставщиков —<br/>без Excel, формул и ручной работы.</div>
+<div style="font-size:var(--fz-sm);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:18px;">Загрузите свой прайс и прайсы поставщиков или конкурентов в любом формате Excel или CSV — программа автоматически сопоставит товары по штрихкодам, покажет у кого дешевле и позволит сформировать заказ прямо в интерфейсе. Все данные остаются в вашем браузере — ничего не уходит на сервер.</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+<div class="marketing-stat-card">
+<div class="marketing-stat-val">10 000+</div>
+<div class="marketing-stat-lbl">позиций сопоставляется за секунды</div>
+</div>
+<div class="marketing-stat-card">
+<div class="marketing-stat-val">xlsx · xls · csv</div>
+<div class="marketing-stat-lbl">любые форматы прайсов без подготовки</div>
+</div>
+<div class="marketing-stat-card">
+<div class="marketing-stat-val">0 формул</div>
+<div class="marketing-stat-lbl">никакого ВПР и сводных таблиц</div>
+</div>
+<div class="marketing-stat-card">
+<div class="marketing-stat-val">Локально</div>
+<div class="marketing-stat-lbl">данные не покидают ваш браузер</div>
+</div>
+</div>
+</div>
+<!-- PAIN CARDS -->
+<div class="instr-section-label">Какие задачи решает программа</div>
+<div class="dash-instr-grid" style="margin-bottom:20px;">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">«Нужно следить за ценами конкурентов»</span></div>
+<div class="dash-instr-card-body">Загрузите прайсы конкурентов вместо или вместе с поставщиками. Принцип тот же — сопоставление по штрихкодам. Сразу видно, где ваша цена выше или ниже рыночной.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">«У поставщика другой штрихкод на тот же товар»</span></div>
+<div class="dash-instr-card-body">База кросскодов связывает разные коды одного товара. «Поиск кросскодов» предлагает совпадения автоматически — по схожести наименований. Достаточно подтвердить нажатием.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="dash-instr-card-title">«Каждую неделю часы на сводку в Excel»</span></div>
+<div class="dash-instr-card-body">Один раз настройте шаблоны названий колонок и накопите базу кросскодов. При следующей загрузке программа автоматически определит колонки и сопоставит товары — сравнение займёт секунды.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">«У поставщиков нал и безнал — путаница»</span></div>
+<div class="dash-instr-card-body">Назовите ценовые колонки так, чтобы в названии было «нал» или «бн» — программа автоматически разделит их по группам оплаты и найдёт минимум в каждой группе отдельно.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">«Поставщик не даёт штрихкоды»</span></div>
+<div class="dash-instr-card-body">Используйте артикулы поставщика как кросскоды — внесите их в базу напротив ваших штрихкодов, и сопоставление заработает автоматически.</div>
+</div>
+</div>
+</div>
+<!-- ══════ UPLOAD INSTRUCTION ══════ -->
+<div id="obrUploadHint" style="padding:0 16px 16px;">
+<!-- WHY THIS MODULE -->
+<div class="instr-why-block">
+<div class="instr-block-title">Вкладка «Загрузка прайсов»</div>
+<div class="instr-body-text">Здесь загружаются все файлы и настраивается разметка колонок. Укажите программе, где штрихкод, где наименование, а где цена — и таблица мониторинга сформируется автоматически. Файлы обрабатываются по очереди прямо в браузере, данные никуда не отправляются.</div>
+</div>
+<!-- HOW TO -->
+<div class="instr-how-block">
+<div class="instr-how-title">Как загрузить и обработать файлы</div>
+<div class="instr-steps-list">
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 1</span>
+<span class="instr-step-text">Есть файл памяти с прошлой сессии? Загрузите его первым — нажмите карточку <b>«Файл памяти»</b>. Восстановятся база штрихкодов и кросскодов, база брендов, список категорий и шаблоны названий колонок для автоопределения.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 2</span>
+<span class="instr-step-text">Нажмите карточку <b>«Мой прайс»</b> и загрузите свой основной прайс-лист. Затем нажмите карточку <b>«Прайсы»</b> и выберите один или несколько файлов поставщиков — можно сразу все. Поддерживаются .xlsx, .xls и .csv.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 3</span>
+<span class="instr-step-text">Файл откроется в редакторе. Программа <b>автоматически определяет</b> колонки по ключевым словам в заголовках. Проверьте подсвеченные колонки: штрихкод (синий), наименование (серый), цена (зелёный). Если они определены верно — ничего менять не нужно, сразу нажмите «Готово».</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 4</span>
+<span class="instr-step-text">Нужно скорректировать? <b>Кликните на заголовок колонки</b> и введите или выберите из списка её роль: Штрихкод, Наименование, Цена, Остаток и другие. Колонка «Штрихкод» — обязательна, без неё файл не попадёт в мониторинг. Одному поставщику можно назначить несколько ценовых колонок — например «Цена нал» и «Цена бн».</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 5</span>
+<span class="instr-step-text">Нажмите <b>«Готово — передать в мониторинг»</b>. Если в очереди есть ещё файлы — редактор откроет следующий. Прогресс очереди виден в строке над таблицей.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 6</span>
+<span class="instr-step-text">Когда все файлы обработаны — перейдите на вкладку <b>«Мониторинг цен»</b>. Таблица сравнения сформируется автоматически.</span>
+</div>
+</div>
+</div>
+<!-- FEATURES -->
+<div class="instr-section-label">Файл памяти — главный элемент системы</div>
+<div class="memory-box">
+<div class="memory-box-header">
+<span style="font-size:22px;"></span>
+<div>
+<div class="instr-block-title--neutral">Что такое файл памяти?</div>
+<div class="toolbar-label">JSON-файл, который сохраняет всю накопленную базу знаний</div>
+</div>
+</div>
+<div class="instr-body-text--mb">Файл памяти — единственный способ сохранить работу между сессиями. В нём хранятся: <b>база штрихкодов и кросскодов</b>, <b>база брендов</b> с синонимами, <b>список категорий</b> и <b>шаблоны названий колонок</b> с ключевыми словами для автоопределения. При загрузке всё восстанавливается за секунды.</div>
+<div class="info-grid">
+<div class="info-card--blue">
+<div class="info-card-label--blue">Что внутри</div>
+<div class="instr-step-text">База штрихкодов и кросскодов · База брендов · Список категорий · Шаблоны и ключевые слова для автоопределения колонок</div>
+</div>
+<div class="info-card--green">
+<div class="info-card-label--green">Когда сохранять</div>
+<div class="instr-step-text">После каждой сессии, где вы добавили кросскоды или бренды. Кнопка «Сохранить файл памяти» появляется в левой панели при наличии несохранённых изменений, а также всегда доступна на вкладках «Штрихкоды» и «Бренды».</div>
+</div>
+<div class="info-card--amber">
+<div class="info-card-label--amber">Важно не потерять</div>
+<div class="instr-step-text">Храните в надёжном месте — облако, корпоративный диск. Без этого файла база кросскодов и настройки будут утеряны при закрытии браузера.</div>
+</div>
+</div>
+<div class="instr-section-label">Почему файл памяти, а не облачная база?</div>
+<div class="instr-privacy-block">
+<div class="instr-privacy-block-title">Ваши данные не покидают ваш компьютер</div>
+<div class="instr-privacy-block-body">Программа работает полностью в браузере — прайсы, цены и данные о поставщиках и конкурентах никуда не отправляются. Никаких учётных записей, никакой подписки, никакого риска утечки коммерческих данных. JSON-файл — это вся «база данных», которую вы контролируете сами: можно скопировать, передать коллеге, открыть в текстовом редакторе.</div>
+</div>
+<div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 14px;">
+<div class="instr-section-label">Как работать с файлом памяти</div>
+<div class="instr-items-list">
+<div class="instr-feature-row">
+<span class="memory-action-badge--blue">Загрузить</span>
+<span class="instr-desc-text">Карточка <b>«Файл памяти»</b> на этой вкладке. Загружайте первым делом при каждом открытии программы — до загрузки прайсов.</span>
+</div>
+<div class="instr-feature-row">
+<span class="memory-action-badge--green">Сохранить</span>
+<span class="instr-desc-text">Кнопка <b>«Сохранить файл памяти»</b> в левой панели (появляется при несохранённых изменениях) или кнопка <b>«Скачать файл памяти»</b> на вкладках «Штрихкоды» и «Бренды».</span>
+</div>
+<div class="instr-feature-row">
+<span style="font-size:var(--fz-xs);font-weight:700;color:#92400E;background:var(--amber-bg);border:1px solid #FDE68A;border-radius:var(--radius);padding:2px 8px;white-space:nowrap;flex-shrink:0;min-width:80px;text-align:center;">Хранить</span>
+<span class="instr-desc-text">Сохраняйте в облаке (Google Drive, Яндекс.Диск) или на корпоративном диске. Рекомендуем называть файл с датой: <code style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:11px;">settings_2024-01-15.json</code></span>
+</div>
+</div>
+</div>
+</div>
+<!-- AUTODETECT -->
+<div class="instr-section-label">Как работает автоопределение колонок</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn--sm">Штрихкод</span>
+<span class="instr-desc-text">Ищется по словам «штрихкод», «ШК», «EAN», «barcode», «код товара» и синонимам. Дополнительный признак — числа от 8 до 14 цифр в значениях колонки.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn--sm">Наименование</span>
+<span class="instr-desc-text">Определяется по словам «наименование», «название», «номенклатура», «name» и синонимам. Обычно это самая длинная текстовая колонка в файле.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn--sm">Цена</span>
+<span class="instr-desc-text">Ищется по словам «цена», «price», «нал», «безнал», «бн», «опт», «ррц» и синонимам. Можно назначить несколько ценовых колонок — каждая появится в мониторинге отдельным столбцом.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn--sm">Настройка</span>
+<span class="instr-desc-text">Кнопка <b>«Настройка названий колонок»</b> в редакторе позволяет добавлять, редактировать и удалять шаблоны и ключевые слова. Изменения сохраняются в файле памяти и применяются ко всем будущим прайсам.</span>
+</div>
+</div>
+</div>
+<!-- TIPS -->
+<div class="dash-instr-grid ax-004">
+<div class="dash-instr-card ax-010">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Пакетная загрузка</span></div>
+<div class="dash-instr-card-body">Выберите несколько файлов поставщиков сразу — программа обработает их по очереди. Для каждого откроется редактор, прогресс виден в строке над таблицей. Можно пропустить файл кнопкой «Пропустить».</div>
+</div>
+<div class="dash-instr-card ax-010">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Остаток из вашего прайса</span></div>
+<div class="dash-instr-card-body">Если в вашем прайсе есть колонка «Остаток», «Наличие» или «Склад» — программа автоматически подхватит её и добавит в таблицу мониторинга отдельным столбцом.</div>
+</div>
+<div class="dash-instr-card ax-005">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Пропущенные строки</span></div>
+<div class="dash-instr-card-body">После передачи файла нажмите <b>«Проверить пропущенные строки»</b> — увидите, какие позиции не попали в мониторинг. Чаще всего это строки без штрихкода или с пустой ценой.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Нет штрихкодов у поставщика</span></div>
+<div class="dash-instr-card-body">Назначьте артикул поставщика как «Штрихкод», затем добавьте эти артикулы как кросскоды в базе штрихкодов — привяжите к вашим EAN-кодам, и сопоставление заработает.</div>
+</div>
+</div>
+<div class="dash-instr-tip"><b>Совет для первого запуска:</b> загрузите ваш прайс и хотя бы один прайс поставщика, настройте колонки и нажмите «Готово». Перейдите в «Мониторинг цен» и посмотрите покрытие в панели статистики вверху. Если много позиций без совпадений — откройте «Поиск кросскодов» и свяжите товары по наименованию. После этого вернитесь в мониторинг: покрытие вырастет.</div>
+</div>
+<!-- Editing toolbars — shown only when a file is loaded -->
+<div id="obrEditArea" style="display:none;">
+<!-- Toolbar — main editing actions -->
+<div class="xl-toolbar" style="background:var(--surface-alt);border-bottom:1px solid var(--border);">
+<!-- Имя файла и тип -->
+<span class="obr-type-badge" id="obrTypeBadge" style="display:none;background:var(--accent);color:#fff;border-radius:3px;padding:2px 8px;font-size:var(--fz-xs);font-weight:700;white-space:nowrap;">Поставщик</span>
+<span class="file-name-display" id="obrFileNameDisplay"></span>
+<!-- Листы -->
+<div class="xl-sheets" id="obrSheetSelector" style="margin-left:auto;">
+<label class="toolbar-label" for="obrSheetSelect">Лист:</label>
+<select class="toolbar-select" id="obrSheetSelect"></select>
+</div>
+</div>
+<!-- Toolbar — кнопки в стиле мониторинга -->
+<div class="xl-toolbar">
+<div class="xl-group">
+<button class="btn xl-btn xl-btn-accent" data-tip="Сохранить CSV и передать в мониторинг." disabled="" id="obrDownloadBtn">
+<i data-lucide="check"></i> Готово — передать в мониторинг
+        </button>
+</div>
+<div class="xl-toolbar-sep"></div>
+<div class="xl-group">
+<button class="btn xl-btn" data-tip="Снять выделение со всех колонок." id="obrResetBtn">
+<i data-lucide="rotate-ccw"></i> Снять выделение колонок
+        </button>
+</div>
+<div class="xl-toolbar-sep"></div>
+<div class="xl-group">
+<button class="btn xl-btn" data-tip="Редактировать список наименований колонок и кросскоды." id="obrManageTemplatesBtn">
+<i data-lucide="settings"></i> Настройка названий колонок
+        </button>
+</div>
+<div class="xl-toolbar-sep"></div>
+<div class="xl-group" style="margin-left:auto;">
+<button class="btn xl-btn" data-tip="Просмотреть пропущенные строки последнего экспорта." disabled="" id="obrShowSkippedBtn">
+<i data-lucide="alert-circle"></i> Проверить пропущенные строки
+        </button>
+</div>
+</div>
+<!-- Status bar -->
+<div class="xl-statusbar">
+<div class="xl-stat" data-tip="Всего столбцов">Столбцов: <b id="obrTotalColumns">0</b></div>
+<div class="xl-stat" data-tip="Выбрано для CSV">Выбрано: <b id="obrSelectedColumns">0</b></div>
+<div class="xl-stat" data-tip="Строк в итоговом CSV">Строк: <b id="obrTotalRows">0</b></div>
+<div class="xl-stat" id="obrQueueStatus" style="margin-left:auto;display:none;"></div>
+</div>
+</div><!-- /obrEditArea -->
+<!-- Queue progress panel -->
+<div id="obrQueuePanel" style="display:none;">
+<div class="obr-queue-bar">
+<div class="obr-queue-bar-left">
+<span class="obr-queue-icon"><i data-lucide="layers"></i></span>
+<div class="obr-queue-info">
+<div class="obr-queue-title">Пакетная обработка</div>
+<div class="obr-queue-current" id="obrQueueCurrent"></div>
+</div>
+</div>
+<div class="obr-queue-bar-center">
+<div class="obr-queue-progress-wrap">
+<div class="obr-queue-progress-fill" id="obrQueueProgressFill"></div>
+</div>
+<div class="obr-queue-chips" id="obrQueueList"></div>
+</div>
+<div class="obr-queue-bar-right">
+<span class="obr-queue-counter" id="obrQueueProgressLabel"></span>
+<button class="obr-queue-skip-btn" id="obrQueueSkipBtn" title="Пропустить файл"><i data-lucide="skip-forward"></i> Пропустить</button>
+</div>
+</div>
+</div>
+<!-- Table -->
+<div class="xl-table-wrap" id="obrTableWrap">
+<table id="obrDataTable"></table>
+</div>
+<!-- Load more -->
+<div class="xl-load-more" id="obrLoadMoreContainer" style="display:none;">
+<button class="btn" data-tip="Показать все строки." id="obrLoadMoreBtn">
+        <i data-lucide="chevron-down"></i> Показать все строки (ещё <span id="obrRemainingRows">0</span>)
+      </button>
+</div>
+</div><!-- /obrTableContainer -->
+</div><!-- /pane-prepare -->
+<!-- ═══ PANE: MONITOR ═══ -->
+<div class="main-pane" id="pane-monitor">
+<div class="container">
+<!-- Unified pane title с компактной статистикой -->
+<div class="pane-title">
+<div class="pane-title-icon"><i data-lucide="bar-chart-2"></i></div>
+<div class="pane-title-text">
+<h2>Мониторинг цен</h2>
+<p>Сравнение цен с поставщиками по штрихкодам</p>
+</div>
+<div class="pane-title-extra">
+<div class="order-toggle-wrap has-tip" data-tip="Режим заказа выключен — кликните на любую цену, чтобы скопировать штрихкод этого товара от данного поставщика" id="orderModeBtn" onclick="setOrderMode(!window._orderModeState)">
+<div class="order-toggle-track">
+<div class="order-toggle-thumb"></div>
+</div>
+</div>
+<button class="btn" disabled="" id="cartBtn" onclick="openCartModal()" style="position:relative;" title="Открыть корзину заказов">
+        <i data-lucide="shopping-cart"></i> Корзина <span id="cartBadge">0</span>
+</button>
+<button class="btn btn-success" disabled="" id="monitorDownloadArchiveBtn" title="Скачать все CSV, Excel и JSON одним архивом">
+<i data-lucide="archive"></i> Скачать все архивом
+      </button>
+<button class="btn help-btn" id="helpBtnMonitor" onclick="openHelpModal('monitor')" title="Инструкция по работе с этой вкладкой"><i data-lucide="help-circle"></i></button>
+</div>
+</div>
+<!-- Info panel — показывается только когда данные загружены -->
+<div class="monitor-info-panel" id="infoPanel" style="display:none;">
+<div class="monitor-info-grid">
+<div class="mip-group">
+<div class="mip-group-label">Данные</div>
+<div class="mip-group-items">
+<div class="mip-item has-tip" data-tip="Сколько уникальных товаров попало в сводную таблицу со всех загруженных файлов">
+<span class="mip-val" id="productCount">—</span>
+<span class="mip-lbl">Товаров</span>
+</div>
+<div class="mip-item has-tip" data-tip="Сколько прайс-листов поставщиков загружено (без вашего прайса)">
+<span class="mip-val" id="fileCount">—</span>
+<span class="mip-lbl">Файлов</span>
+</div>
+<div class="mip-item has-tip" data-tip="Сколько колонок с ценами от поставщиков участвует в сравнении. Ваши цены и остатки не учитываются">
+<span class="mip-val" id="columnCount">—</span>
+<span class="mip-lbl">Цен поставщиков</span>
+</div>
+</div>
+</div>
+<div class="mip-divider"></div>
+<div class="mip-group">
+<div class="mip-group-label">Сопоставление</div>
+<div class="mip-group-items">
+<div class="mip-item mip-item--green has-tip" data-tip="Сколько ваших товаров нашлись хотя бы у одного поставщика — по штрихкоду или через базу кросскодов">
+<span class="mip-val" id="matchCount">—</span>
+<span class="mip-lbl">Совпадений</span>
+</div>
+<div class="mip-item has-tip" data-tip="Товары найдены у поставщика по точному совпадению штрихкода — никаких доп. настроек не требовалось">
+<span class="mip-val" id="matchByBarcode">—</span>
+<span class="mip-lbl">По штрихкоду</span>
+</div>
+<div class="mip-item mip-item--amber has-tip" data-tip="У вас и поставщика один и тот же товар, но с разными кодами. Совпадение нашлось благодаря базе кросскодов">
+<span class="mip-val" id="matchByCross">—</span>
+<span class="mip-lbl">По кросскодам</span>
+</div>
+<div class="mip-item mip-item--red has-tip" data-tip="Ваши товары, которых нет ни у одного поставщика. Возможно, коды отличаются — добавьте кросскоды чтобы связать их">
+<span class="mip-val" id="noMatchCount">—</span>
+<span class="mip-lbl">Без совпадений</span>
+</div>
+<div class="mip-item mip-item--coverage has-tip" data-tip="Процент ваших товаров, по которым нашлась цена хотя бы одного поставщика. Чем выше — тем полнее сравнение">
+<span class="mip-val" id="coveragePct">—</span>
+<span class="mip-lbl">Покрытие</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Скрытые file inputs и статусные элементы (нужны JS — не удалять) -->
+<div aria-hidden="true" style="display:none;">
+<input accept=".json" id="synonymsInput" type="file">
+<input accept=".csv,.xlsx,.xls" id="myPriceInput" type="file">
+<input accept=".csv,.xlsx,.xls" id="competitorInput" multiple="" type="file">
+<div id="synonymsStatus"></div>
+<div id="myPriceStatus"></div>
+<div id="competitorStatus"></div>
+<div id="jsonFileList"></div>
+<div id="myPriceFileList"></div>
+<div id="monitorSupplierFileList"></div>
+<button id="unifiedSaveJsonBtn"></button>
+</div>
+<div class="controls">
+<div class="controls-group">
+<button class="btn btn-secondary" disabled="" id="bigDiffBtn" title="Большая разница цен"><i data-lucide="trending-down"></i> Большая разница</button>
+<button class="btn btn-secondary" disabled="" id="deltaFilterBtn" title="Фильтр по разнице цены %"><i data-lucide="percent"></i> Дельта</button>
+<button class="btn btn-secondary" disabled="" id="showMyPriceBtn" title="Только мой прайс"><i data-lucide="tag"></i> Мой прайс</button>
+<button class="btn btn-secondary" disabled="" id="maxCoverageBtn" title="Поиск новинок"><i data-lucide="sparkles"></i> Поиск новинок</button>
+<button class="btn btn-secondary" disabled="" id="compactMatchesBtn" title="Компактный вид"><i data-lucide="layout-list"></i> Компактный вид</button>
+<button class="btn btn-secondary" disabled="" id="minPriceBtn" title="Подсветить минимальную цену в каждой строке (нал + безнал + мой прайс)"><i data-lucide="arrow-down-narrow-wide"></i> Мин. цена</button>
+</div>
+<div class="controls-group export-group">
+<button class="btn btn-success" disabled="" id="exportMyPriceBtn" title="Мой прайс Excel"><i data-lucide="save"></i> Мой прайс</button>
+<button class="btn btn-success" disabled="" id="exportAllBtn" title="Все данные Excel"><i data-lucide="save"></i> Всё</button>
+<button class="btn btn-success" disabled="" id="exportCurrentBtn" title="Текущий вид Excel"><i data-lucide="save"></i> Текущий вид</button>
+</div>
+<div class="controls-group danger-group">
+<button class="btn btn-danger" disabled="" id="clearBtn" title="Сбросить все данные"><i data-lucide="trash-2"></i> Сбросить всё</button>
+</div>
+</div>
+<!-- Sticky filter reminder bar -->
+<div class="hidden-columns" id="monitorStickyBar">
+<span class="hidden-columns-label">Активные фильтры:</span>
+<span id="stickyBarChips"></span>
+<button class="btn sticky-reset-btn" id="stickyBarResetBtn"><i data-lucide="x"></i> Сбросить все</button>
+</div>
+<!-- Delta % filter panel -->
+<div id="deltaPanelWrap">
+<div class="delta-group">
+<label for="deltaColA">Сравнивать</label>
+<select class="delta-select" id="deltaColA">
+<option value="__myprice">Мой прайс</option>
+</select>
+</div>
+<div class="delta-group delta-arrow-label">↔</div>
+<div class="delta-group">
+<label for="deltaColB">С колонкой</label>
+<select class="delta-select" id="deltaColB">
+<option value="__best">Лучший поставщик (мин)</option>
+</select>
+</div>
+<div class="delta-group">
+<label for="deltaMin">Разница</label>
+<div class="delta-range-row">
+<input class="delta-inp" id="deltaMin" max="999" min="0" placeholder="от % (необяз.)" type="number" value=""/>
+<span class="delta-sep">—</span>
+<input class="delta-inp" id="deltaMax" max="999" min="0" placeholder="до % (необяз.)" type="number" value=""/>
+<span class="delta-sep">%</span>
+</div>
+</div>
+<div class="delta-group">
+<span class="delta-label-text">Направление</span>
+<div class="delta-dir-btns">
+<button class="delta-dir-btn active-cheaper" id="deltaDirCheaper" title="Поставщик дешевле моей цены"><i data-lucide="arrow-down"></i> Дешевле</button>
+<button class="delta-dir-btn" id="deltaDirPricier" title="Поставщик дороже моей цены"><i data-lucide="arrow-up"></i> Дороже</button>
+</div>
+</div>
+<div class="delta-group delta-action-group">
+<button class="delta-apply-btn" id="deltaApplyBtn">Применить</button>
+<button class="delta-reset-btn" id="deltaResetBtn">Сброс</button>
+</div>
+</div>
+<div class="search-box--above-table" id="monitorSearchBox" style="display:none;">
+<div class="filter-row">
+<input class="search-input" id="searchInput" placeholder="Поиск по названию / артикулу..." style="flex:1;" type="text"/>
+<button class="btn btn-secondary" id="exactSearchBtn" title="Точный поиск: не расширять запрос синонимами брендов" style="flex-shrink:0;white-space:nowrap;">Точный поиск</button>
+<div class="select-wrapper">
+<select id="categoryFilterSelect" style="padding:0 32px 0 11px;border:1px solid var(--border-strong);border-radius:var(--radius-md);
+                 font-size:var(--fz-base);font-family:'Inter',sans-serif;background:var(--surface);
+                 color:var(--text-primary);height:32px;min-width:200px;max-width:280px;
+                 cursor:pointer;appearance:none;-webkit-appearance:none;box-sizing:border-box;" title="Фильтр по категории (частые слова из прайсов)">
+<option value="">Категории</option>
+</select>
+<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;
+                     font-size:10px;color:var(--text-muted);">▼</span>
+</div>
+<button id="catExclBtn" class="btn btn-secondary" style="flex-shrink:0;" title="Список слов для фильтра категорий (белый список)"><span id="catExclBadge"></span>категории</button>
+</div>
+</div>
+<div id="tableContainer">
+<div class="empty-state" id="monitorEmptyState">
+<div class="dash-instr ax-006">
+<!-- MARKETING HERO -->
+<div class="marketing-hero">
+<div style="position:absolute;top:-18px;right:-18px;width:130px;height:130px;background:rgba(255,255,255,0.04);border-radius:50%;pointer-events:none;"></div>
+<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Вкладка «Мониторинг цен»</div>
+<div style="font-size:17px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:10px;">Все прайсы — в одной таблице.<br/>Сразу видно у кого дешевле.</div>
+<div style="font-size:var(--fz-sm);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:18px;">Программа сопоставляет ваш прайс с прайсами поставщиков и конкурентов по штрихкодам. По каждому товару вы видите все цены рядом — нал и безнал раздельно, минимум подсвечен зелёным. Можно фильтровать, искать, добавлять товары в корзину, задавать наценку и выгружать готовый заказ в Excel одним нажатием.</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+<div class="marketing-stat-card"><div class="marketing-stat-val">Нал / Бн</div><div class="marketing-stat-lbl">цены по группам оплаты раздельно</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Корзина</div><div class="marketing-stat-lbl">сформируйте заказ прямо в таблице</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Наценка</div><div class="marketing-stat-lbl">рассчитайте свою цену в один клик</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Excel</div><div class="marketing-stat-lbl">выгрузка таблицы и заказов</div></div>
+</div>
+</div>
+<!-- HOW TO START -->
+<div class="instr-how-block">
+<div class="instr-how-title">Как начать работу</div>
+<div class="instr-steps-list">
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 1</span>
+<span class="instr-step-text">Загрузите файлы на вкладке <b>«Загрузка прайсов»</b> и нажмите «Готово» для каждого — таблица сравнения сформируется автоматически при переходе на эту вкладку. Вверху появится панель статистики: сколько товаров совпало и какое покрытие.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 2</span>
+<span class="instr-step-text">Если много позиций без совпадений — откройте <b>«Поиск кросскодов»</b> и свяжите товары по наименованию. После этого вернитесь: покрытие вырастет. Кросскоды сохраняются в файле памяти.</span>
+</div>
+</div>
+</div>
+<!-- STAT PANEL -->
+<div class="instr-section-label">Панель статистики</div>
+<div class="instr-why-block">
+<div class="instr-block-title">Что показывает статистика вверху</div>
+<div class="instr-body-text">Появляется сразу после загрузки данных. Показывает: <b>Товаров</b> — всего уникальных позиций в сводной таблице; <b>Файлов</b> — сколько прайсов поставщиков загружено; <b>Цен поставщиков</b> — сколько ценовых колонок участвует в сравнении. Блок «Сопоставление»: <b>Совпадений</b> — ваших товаров с ценой хотя бы одного поставщика; <b>По штрихкоду</b> — точные совпадения без кросскодов; <b>По кросскодам</b> — найдено через базу кросскодов; <b>Без совпадений</b> — ваши товары, которых нет ни у одного поставщика; <b>Покрытие %</b> — доля ваших товаров с найденной ценой. Чем выше — тем полнее сравнение.</div>
+</div>
+<!-- FILTERS -->
+<div class="instr-section-label">Кнопки фильтрации и анализа</div>
+<div class="instr-tool-panel">
+<div class="instr-items-list">
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="trending-down"></i> Большая разница</button>
+<span class="instr-desc-text">Сортирует и выделяет товары, где разрыв цен между колонками значителен — быстрый способ найти позиции для пересмотра закупки или ценообразования. Повторный клик снимает режим.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="percent"></i> Дельта</button>
+<span class="instr-desc-text">Расширенный фильтр. Раскрывает панель: выберите две любые колонки, задайте диапазон отклонения в процентах и направление — <b>Дешевле</b> (поставщик дешевле вашей цены) или <b>Дороже</b>. Нажмите «Применить». Например: «Лучший поставщик дешевле Моего прайса на 5–30%».</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="tag"></i> Мой прайс</button>
+<span class="instr-desc-text">Показывает только товары из вашего прайса — скрывает позиции, которые есть исключительно у поставщиков. Удобно для проверки своего ассортимента.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="sparkles"></i> Поиск новинок</button>
+<span class="instr-desc-text">Обратный фильтр: показывает только товары, которых <b>нет</b> в вашем прайсе, но они есть у поставщиков. Удобно для поиска позиций для расширения ассортимента.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="layout-list"></i> Компактный вид</button>
+<span class="instr-desc-text">Сворачивает несколько строк наименований одного товара в одну компактную строку. По умолчанию включён. Если у товара несколько вариантов названий от разных поставщиков — включите для удобства.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="arrow-down-narrow-wide"></i> Мин. цена</button>
+<span class="instr-desc-text">Подсвечивает зелёным минимальную цену в каждой строке — раздельно для группы «нал», группы «бн» и вашего прайса. Сразу видно у кого самая выгодная закупка по каждому типу оплаты.</span>
+</div>
+</div>
+</div>
+<!-- ACTIVE FILTERS BAR -->
+<div class="instr-section-label">Строка активных фильтров</div>
+<div class="instr-why-block">
+<div class="instr-block-title">Контроль активных условий</div>
+<div class="instr-body-text">Когда включён хотя бы один фильтр, поиск или категория — под панелью кнопок появляется серая строка с перечнем всех активных условий. Кнопка <b>«Сбросить все»</b> справа снимает их все одновременно — не нужно искать, что было включено.</div>
+</div>
+<!-- SEARCH AND CATEGORIES -->
+<div class="instr-section-label">Поиск и фильтр по категориям</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn">Строка поиска</span>
+<span class="instr-desc-text">Фильтрует таблицу в реальном времени по наименованию товара или артикулу. Поиск работает совместно с фильтром категорий — оба условия применяются одновременно.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Точный поиск</span>
+<span class="instr-desc-text">По умолчанию поиск <b>расширяется синонимами брендов</b> из базы брендов — запрос «чай» найдёт и строки с «tea», если они связаны в базе. Кнопка «Точный поиск» отключает это расширение и ищет строго по введённому тексту.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Категории</span>
+<span class="instr-desc-text">Выпадающий список наиболее часто встречающихся слов из наименований всех загруженных прайсов. Выбор категории мгновенно фильтрует таблицу. Работает вместе со строкой поиска.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Кнопка «категории»</span>
+<span class="instr-desc-text">Открывает редактор белого списка категорий. Можно добавить нужные слова вручную, удалить лишние или очистить список. Изменения сохраняются в файле памяти.</span>
+</div>
+</div>
+</div>
+<!-- TABLE -->
+<div class="instr-section-label">Работа с таблицей</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn">Клик по цене</span>
+<span class="instr-desc-text">Без режима заказа — <b>копирует штрихкод</b> этого товара от данного поставщика в буфер обмена. В режиме заказа — открывает диалог добавления в корзину.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Кнопка ⎘ у штрихкода</span>
+<span class="instr-desc-text">Копирует штрихкод товара в буфер обмена одним кликом.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Кнопка ÷ у цены</span>
+<span class="instr-desc-text">Появляется рядом с ценой, если программа определила, что цена может быть указана <b>за блок или упаковку</b>, а не за штуку. Выберите делитель из списка (2–100) — цена пересчитается на единицу и сохранится для этой ячейки до перезагрузки.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Значок ÷ (серый)</span>
+<span class="instr-desc-text">Автоделение уже применено — цена была в прайсе указана за блок, программа разделила её автоматически. Цена в ячейке уже за штуку.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Нал / Бн колонки</span>
+<span class="instr-desc-text">Если колонка с ценой называется так, что в названии есть «нал» или «бн», программа автоматически группирует эти колонки. «Мин. цена» подсвечивает минимум в каждой группе отдельно — нал и безнал не смешиваются.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Масштаб таблицы</span>
+<span class="instr-desc-text">Ползунок в нижнем левом углу (80–100%) — уменьшает шрифт и размер строк, чтобы в одном экране помещалось больше колонок. Удобно при работе с большим числом поставщиков.</span>
+</div>
+</div>
+</div>
+<!-- ORDER MODE + CART MARKETING -->
+<div class="instr-privacy-block">
+<div class="instr-privacy-block-title">Режим заказа и корзина — заказ за несколько кликов</div>
+<div class="instr-privacy-block-body">Включите переключатель «Режим заказа» в правом верхнем углу — и каждый клик по цене в таблице открывает диалог добавления товара в корзину. Выберите количество, подтвердите. Когда нужные позиции набраны — откройте корзину, задайте наценку, подставьте свои наименования и выгрузите готовый заказ в Excel. Отдельный лист для каждого поставщика, с итоговой суммой.</div>
+</div>
+<!-- CART DETAILS -->
+<div class="instr-section-label">Как работает корзина</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn">Переключатель режима заказа</span>
+<span class="instr-desc-text">Расположен в правом верхнем углу вкладки. Когда включён — клик по любой цене открывает диалог выбора количества вместо копирования штрихкода. Счётчик на кнопке «Корзина» показывает общее число позиций.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Диалог добавления</span>
+<span class="instr-desc-text">Показывает: наименование товара, поставщика, штрихкод, цену за штуку. Если программа обнаружила, что товар продаётся блоками — предлагает быстрые кнопки-чипы на типичные кратности (10, 20, 50 шт.). Введите количество вручную или выберите чип, нажмите «В корзину».</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Предупреждения в диалоге</span>
+<span class="instr-desc-text">Если у этого поставщика есть цена ниже выбранной — диалог покажет предупреждение с минимальной ценой. Если цена похожа на блочную, но деление не применено — программа об этом предупредит.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Кнопка «Корзина»</span>
+<span class="instr-desc-text">Открывает список всех добавленных позиций, сгруппированных по поставщикам. Количество любой позиции можно изменить прямо в таблице корзины. Позицию можно удалить кнопкой ✕. Корзина сохраняется при переключении между вкладками.</span>
+</div>
+</div>
+</div>
+<!-- MARKUP + MY PRICE -->
+<div class="instr-section-label">Наценка и формирование своего прайса</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn">Панель «Наценка»</span>
+<span class="instr-desc-text">В корзине для каждого поставщика есть панель: выберите процент наценки (1–100%) и нажмите <b>«% Применить»</b>. Наценка применяется к позициям без наценки, или к выбранным через чекбоксы. Колонка «Моя цена» появляется в таблице корзины и в экспортируемом Excel.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Выборочная наценка</span>
+<span class="instr-desc-text">Поставьте галочки только на нужных позициях — наценка применится только к ним. Снять наценку — кнопка <b>«✕ Отменить наценку»</b>. Кнопка «Применить» недоступна, если у всех позиций уже задана наценка.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Кнопка «Свой прайс»</span>
+<span class="instr-desc-text">Заменяет штрихкоды и наименования поставщика на <b>ваши</b> — из загруженного прайса. Совпадение ищется по кросскодам. В корзине и Excel появятся две колонки: «Штрихкод поставщика» и «Мой штрихкод», «Наименование поставщика» и «Моё наименование». Удобно для формирования заявки в своей номенклатуре.</span>
+</div>
+</div>
+</div>
+<!-- EXPORT -->
+<div class="instr-section-label">Скачивание и экспорт</div>
+<div class="instr-tool-panel">
+<div class="instr-items-list">
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled=""><i data-lucide="save"></i> Мой прайс</button>
+<span class="instr-desc-text">Excel с вашим ассортиментом: только товары из вашего прайса, для каждого — все цены поставщиков рядом. Строки отсортированы в порядке вашего прайса.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled=""><i data-lucide="save"></i> Всё</button>
+<span class="instr-desc-text">Полная таблица: все товары из всех загруженных файлов, включая позиции поставщиков, которых нет в вашем прайсе.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled=""><i data-lucide="save"></i> Текущий вид</button>
+<span class="instr-desc-text">Выгружает только то, что сейчас отображается на экране — с учётом активных фильтров, поиска и категории. Идеально для выгрузки конкретной выборки.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn instr-demo-btn" disabled=""><i data-lucide="archive"></i> Скачать все архивом</button>
+<span class="instr-desc-text">ZIP-архив: все обработанные CSV, Excel-файлы «Мой прайс» и «Всё», Excel корзины (если есть позиции) и файл памяти JSON. Полный бэкап сессии одним файлом.</span>
+</div>
+</div>
+</div>
+<!-- DANGER ZONE -->
+<div class="instr-section-label">Сброс данных</div>
+<div class="instr-tool-panel">
+<div class="instr-items-list">
+<div class="instr-feature-row">
+<button class="btn btn-danger instr-demo-btn" disabled=""><i data-lucide="trash-2"></i> Сбросить всё</button>
+<span class="instr-desc-text"><b style="color:var(--red);">Внимание:</b> кнопка удаляет <b>все</b> загруженные прайсы, таблицу сравнения, а также <b>базу штрихкодов и базу брендов</b> из текущей сессии. Если вы не скачали файл памяти — кросскоды и бренды будут утеряны. Перед нажатием сохраните файл памяти через кнопку в левой панели.</span>
+</div>
+</div>
+</div>
+<!-- CONCEPTS -->
+<div class="instr-section-label">Важные особенности</div>
+<div class="dash-instr-grid ax-004">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Сравнение по штрихкоду</span></div>
+<div class="dash-instr-card-body">Основной метод сопоставления. Если коды одинаковые — товары связываются автоматически. Если разные — нужна запись в базе кросскодов. Артикулы поставщика тоже можно использовать как кросскоды.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Нал и безнал</span></div>
+<div class="dash-instr-card-body">Назовите ценовые колонки так, чтобы в названии было слово «нал» или «бн». Программа автоматически разобьёт их по группам и найдёт минимум в каждой группе отдельно.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Конкуренты</span></div>
+<div class="dash-instr-card-body">Загружайте прайсы конкурентов вместо или вместе с поставщиками. Принцип тот же — сопоставление по штрихкодам. Сразу видно, где ваша цена выше или ниже рыночной.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Покрытие растёт с базой</span></div>
+<div class="dash-instr-card-body">Чем больше кросскодов в базе — тем выше покрытие. Используйте «Поиск кросскодов» для полуавтоматического пополнения. После добавления кросскодов не забудьте сохранить файл памяти.</div>
+</div>
+</div>
+
+<!-- CATEGORIES EXPLANATION -->
+<div class="instr-section-label">Фильтр «Категории» — как он работает</div>
+<div class="instr-why-block">
+<div class="instr-block-title">Откуда берутся категории и при чём тут база брендов</div>
+<div class="instr-body-text--mb">Список категорий формируется <b>автоматически</b> из частых слов, встречающихся в наименованиях загруженных прайсов. Программа подбирает самые характерные слова и предлагает их как категории для фильтрации. Настроить белый список слов — кнопка <b>«категории»</b> рядом с фильтром.</div>
+<div class="instr-body-text">База брендов усиливает фильтр: если вы добавили синонимы (например, «чай» и «tea» в одну группу), то при выборе категории «чай» в результат попадут строки с «tea», «tea bags» и другими синонимами из вашей базы. Это работает автоматически — никаких дополнительных настроек не требуется. Чем полнее база брендов, тем точнее работает фильтр.</div>
+</div>
+
+<div class="dash-instr-tip"><b>Совет по работе:</b> включите «Мин. цена», выберите нужную категорию, затем включите режим заказа. Кликайте по зелёным ценам — товары быстро наберутся в корзину. Откройте корзину, задайте наценку, нажмите «Свой прайс» — и скачивайте готовую заявку в Excel.</div>
+</div>
+</div>
+</div>
+<!-- ── Zoom bar ── -->
+<div id="tableZoomBar">
+  <div class="zoom-slider-group">
+    <i data-lucide="zoom-out" style="width:13px;height:13px;color:var(--text-muted);flex-shrink:0;"></i>
+    <input type="range" id="tableZoomSlider" min="80" max="100" value="100" step="5" title="Масштаб таблицы">
+    <i data-lucide="zoom-in" style="width:13px;height:13px;color:var(--text-muted);flex-shrink:0;"></i>
+    <span id="tableZoomLabel">100%</span>
+  </div>
+</div>
+</div>
+</div><!-- /pane-monitor -->
+<!-- ═══ PANE: MATCHER ═══ -->
+<div class="main-pane" id="pane-matcher">
+<div class="container">
+<!-- Unified pane title -->
+<div class="pane-title">
+<div class="pane-title-icon"><i data-lucide="link-2"></i></div>
+<div class="pane-title-text">
+<h2>Поиск кросскодов <span style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;vertical-align:middle;letter-spacing:0.3px;" title="Алгоритм поиска продолжает улучшаться — всегда проверяйте пары перед подтверждением">Beta</span></h2>
+<p>Поиск связей между товарами по наименованию — всегда проверяйте пары перед подтверждением</p>
+</div>
+<div class="pane-title-extra">
+<button class="btn btn-success" id="matcherRunBtn" title="Запустить поиск"><i data-lucide="play"></i> Запустить поиск</button>
+<button class="btn help-btn" id="helpBtnMatcher" onclick="openHelpModal('matcher')" title="Инструкция по работе с этой вкладкой"><i data-lucide="help-circle"></i></button>
+</div>
+</div>
+<div class="obr-modal-note" id="matcherDirtyWarn" style="display:none;margin-bottom:10px;">
+      Состав файлов изменился — результаты поиска могут быть неактуальны. Запустите поиск повторно.
+    </div>
+<div class="controls-group" id="matcherFilesPanel" style="display:none;flex-wrap:wrap;margin-bottom:10px;">
+<div id="matcherJsonRow" style="display:none;flex-shrink:0;">
+<label id="matcherJsonToggleRow" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none;" title="Включить/отключить использование базы кросскодов при матчинге">
+<input checked="" id="matcherJsonEnabled" style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer;flex-shrink:0;" type="checkbox"/>
+<span id="matcherJsonLabel" style="font-size:var(--fz-sm);color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;"><strong style="color:var(--text-primary);font-weight:600;">JSON не загружен</strong></span>
+</label>
+<span style="width:1px;height:20px;background:var(--border);display:inline-block;vertical-align:middle;margin:0 6px 0 8px;flex-shrink:0;"></span>
+</div>
+<div class="ax-011" id="matcherFileChips"></div>
+</div>
+<div class="matcher-stats" id="matcherStats" style="display:none;">
+<div class="mstat active" data-mv="all"><div class="mstat-val" id="ms-all">0</div><div class="mstat-lbl">Все пары</div></div>
+<div class="mstat" data-mv="high"><div class="mstat-val" id="ms-high">0</div><div class="mstat-lbl">≥80% высокие</div></div>
+<div class="mstat" data-mv="mid"><div class="mstat-val" id="ms-mid">0</div><div class="mstat-lbl">55–79%</div></div>
+</div>
+<div class="controls-group" id="matcherFileFilter" style="display:none;margin:6px 0 10px;">
+<span style="font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">Показать пары:</span>
+<span style="width:1px;height:18px;background:var(--border);display:inline-block;flex-shrink:0;"></span>
+<div class="ax-011" id="matcherFilterChips"></div>
+</div>
+<!-- Matcher history -->
+<div id="matcherHistoryWrap">
+<div class="mhist-header" id="matcherHistoryToggle">
+<span style="font-size:12px;flex-shrink:0;">↩</span>
+<span class="mhist-title">История действий</span>
+<span class="mhist-count" id="mhistCount">0</span>
+<span class="mhist-chevron">▼</span>
+</div>
+<div class="mhist-body" id="matcherHistoryBody"></div>
+</div>
+<div class="search-box--above-table" id="matcherSearchRow" style="display:none;">
+<div class="filter-row">
+<input class="search-input" disabled="" id="matcherSearchInp" placeholder="Поиск по названию / штрихкоду..." style="flex:1;"/>
+<button class="btn btn-secondary" id="matcherExactBtn" title="Точный поиск: не расширять запрос синонимами брендов" style="flex-shrink:0;white-space:nowrap;">Точный поиск</button>
+<div id="matcherCatRow" style="display:none;position:relative;flex-shrink:0;">
+<select id="matcherCatSelect" style="padding:0 32px 0 11px;border:1px solid var(--border-strong);border-radius:var(--radius-md);
+                   font-size:var(--fz-base);font-family:'Inter',sans-serif;background:var(--surface);
+                   color:var(--text-primary);height:32px;min-width:200px;max-width:280px;
+                   cursor:pointer;appearance:none;-webkit-appearance:none;box-sizing:border-box;" title="Фильтр по категории (слова из найденных пар)">
+<option value="">Категории</option>
+</select>
+<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;
+                       font-size:10px;color:var(--text-muted);">▼</span>
+</div>
+</div>
+</div>
+<div id="matcherProgress" style="display:none;padding:8px 0;">
+<div id="matcherProgressLbl" style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Анализ...</div>
+<div style="height:5px;background:var(--border);border-radius:3px;"><div id="matcherProgressFill" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width .2s;"></div></div>
+</div>
+<div class="table-wrapper" id="matcherTableWrap" style="display:none;margin-top:8px;">
+<table id="matcherTable">
+<thead><tr>
+<th style="width:46px;">%</th>
+<th style="width:110px;">Источник</th>
+<th>Наименование</th>
+<th style="width:135px;">Штрихкод</th>
+</tr></thead>
+<tbody id="matcherTbody"></tbody>
+</table>
+</div>
+<div class="empty-state" id="matcherEmpty">
+<div class="dash-instr ax-006">
+
+<!-- MARKETING HERO -->
+<div class="marketing-hero">
+<div style="position:absolute;top:-18px;right:-18px;width:130px;height:130px;background:rgba(255,255,255,0.04);border-radius:50%;pointer-events:none;"></div>
+<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Вкладка «Поиск кросскодов»</div>
+<div style="font-size:17px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:10px;">Один и тот же товар —<br/>разные штрихкоды. Программа их свяжет.</div>
+<div style="font-size:var(--fz-sm);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:18px;">Поставщик присваивает своему товару собственный код — он почти никогда не совпадает с вашим. В мониторинге такой товар остаётся без цены, хотя фактически он есть у поставщика. Этот инструмент сравнивает наименования из всех загруженных прайсов, находит похожие пары и предлагает их вам на проверку. Одно подтверждение — и связь сразу попадает в базу, мониторинг пересчитывается, покрытие растёт.</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+<div class="marketing-stat-card"><div class="marketing-stat-val">0–100%</div><div class="marketing-stat-lbl">оценка схожести для каждой пары</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">≥80%</div><div class="marketing-stat-lbl">высокие — обычно один товар</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Сразу</div><div class="marketing-stat-lbl">мониторинг обновляется при подтверждении</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">↩</div><div class="marketing-stat-lbl">каждое действие можно отменить</div></div>
+</div>
+</div>
+
+<!-- WHY -->
+<div class="instr-why-block">
+<div class="instr-block-title">Зачем это нужно и когда использовать</div>
+<div class="instr-body-text--mb">Мониторинг сопоставляет товары <b>по штрихкоду</b>. Если у вас и у поставщика разные коды на один и тот же товар — в таблице появится строка «без совпадений» и цена поставщика не отобразится. Поиск кросскодов решает именно эту проблему: он анализирует <b>наименования</b> и находит пары с высокой схожестью. Вы смотрите на каждую пару и решаете — один это товар или нет. Подтверждённая связь называется кросскодом и хранится в базе штрихкодов.</div>
+<div class="instr-body-text">Запускайте поиск в двух случаях: <b>при первом запуске</b> программы — чтобы сразу поднять покрытие, и <b>после загрузки нового прайса</b> — чтобы связать новые товары. Уже известные кросскоды повторно не предлагаются — поиск работает только с несвязанными парами.</div>
+</div>
+
+<!-- HOW TO START -->
+<div class="instr-how-block">
+<div class="instr-how-title">Как пользоваться</div>
+<div class="instr-steps-list">
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 1</span>
+<span class="instr-step-text">Убедитесь, что прайсы уже загружены на вкладке <b>«Загрузка прайсов»</b> и переданы в мониторинг. Чем больше файлов — тем больше пар найдёт система. Если есть файл памяти с кросскодами — загрузите его тоже: уже известные пары не будут предложены повторно.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 2</span>
+<span class="instr-step-text">Нажмите <b>«Запустить поиск»</b> в правом верхнем углу. Анализ идёт в фоне и занимает несколько секунд. Когда закончит — появится таблица пар и статистика.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 3</span>
+<span class="instr-step-text">В строке статистики нажмите <b>«≥80% высокие»</b> — начните с них, там меньше всего ошибок. Для работы с конкретным ассортиментом используйте поиск по названию или фильтр по категории — категории формируются автоматически из слов наименований найденных пар, и учитывают синонимы из вашей базы брендов.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 4</span>
+<span class="instr-step-text">Кликните на любую строку таблицы. Откроется окно с двумя вкладками. <b>Вкладка «Штрихкоды»</b> — основная: здесь два наименования и два кода, прочитайте описание действия и нажмите <b>«Подтвердить»</b> или <b>«Отмена»</b>. <b>Вкладка «Бренды»</b> — дополнительная возможность прямо здесь, не уходя со страницы: слова из обоих наименований уже извлечены и предложены кнопками — нажмите нужные и они попадут в поля «Главная форма», «Синонимы» или «Антонимы». Нажмите «Сохранить бренд» — и словарь пополнится за секунды. Два дела в одном диалоге.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 5</span>
+<span class="instr-step-text">После проверки сохраните файл памяти — кнопка появится в левой панели, или зайдите во вкладку <b>«Штрихкоды»</b> и нажмите <b>«Скачать файл памяти»</b>. Все кросскоды сохранятся для следующей сессии.</span>
+</div>
+</div>
+</div>
+
+<!-- STATS BAR -->
+<div class="instr-section-label">Строка статистики и фильтрация пар</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:130px;">Все пары</span>
+<span class="instr-desc-text">Все найденные пары с оценкой от 55% и выше. Плитка кликабельна — переключает режим отображения.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:130px;color:var(--green-dark);">≥80% высокие</span>
+<span class="instr-desc-text">Пары с высокой уверенностью — <b>начинайте с них</b>. Здесь почти всегда один и тот же товар, ошибки редки.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:130px;color:var(--amber-dark);">55–79% средние</span>
+<span class="instr-desc-text">Требуют внимательной проверки. Часть окажется верными — особенно если наименования сокращены по-разному. Не подтверждайте, если есть сомнения.</span>
+</div>
+</div>
+</div>
+
+<!-- TABLE STRUCTURE -->
+<div class="instr-section-label">Таблица пар</div>
+<div class="instr-why-block">
+<div class="instr-block-title">Как читать таблицу</div>
+<div class="instr-body-text">Каждая пара занимает <b>две строки</b>: первая — товар из одного файла, вторая — из другого. Колонки: <b>%</b> — оценка схожести (зелёный ≥80%, жёлтый 55–79%); <b>Источник</b> — из какого прайса; <b>Наименование</b>; <b>Штрихкод</b>. Подтверждённые пары подсвечены зелёным фоном — они уже в базе. Кликните на строку, чтобы открыть окно подтверждения.</div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="instr-section-label">Окно подтверждения пары</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;">Оценка схожести</span>
+<span class="instr-desc-text">Показана цветом вверху окна. Внимательно сравните оба наименования и штрихкода — иногда 85% может быть ошибкой, если названия случайно похожи.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;">Описание действия</span>
+<span class="instr-desc-text">Синяя строка под оценкой объясняет, что именно произойдёт в базе при подтверждении. Возможные варианты: <b>«Создать новую группу»</b> — оба кода новые; <b>«Добавить как кросскод к группе»</b> — один код уже в базе, второй добавится к нему; <b>«Объединить группы»</b> — оба кода уже есть в разных группах, группы сольются в одну.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;">Вкладка «Штрихкоды»</span>
+<span class="instr-desc-text">Основная вкладка окна — здесь происходит подтверждение связи штрихкодов. Кнопка <b>«Подтвердить»</b> записывает пару в базу и сразу пересчитывает таблицу мониторинга. Если пара уже в одной группе — кнопка скрыта.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;">Вкладка «Бренды»</span>
+<span class="instr-desc-text">Дополнительная возможность: прямо в окне пары можно создать или пополнить запись в базе брендов — указать главную форму, её синонимы и антонимы. Слова из наименований предложены кнопками для быстрого заполнения. Помните: каждая группа — одно понятие, не смешивайте бренд и тип товара в одних синонимах.</span>
+</div>
+</div>
+</div>
+
+<!-- FAST WORKFLOW -->
+<div class="instr-section-label">Быстрый режим — как разобрать 100 пар за 10 минут</div>
+<div class="instr-how-block">
+<div class="instr-how-title">Сценарий: прогон всего списка без лишних движений</div>
+<div class="instr-steps-list">
+<div class="instr-step-row">
+<span class="instr-step-badge">1</span>
+<span class="instr-step-text">Нажмите плитку <b>«≥80% высокие»</b> — остаются только пары с максимальной уверенностью. Именно здесь можно работать быстро: большинство пар не требует долгого анализа.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">2</span>
+<span class="instr-step-text">Кликните на первую строку таблицы — откроется окно. Быстро сравните два наименования: если товар явно один и тот же — нажмите <b>«Подтвердить»</b>. Окно закроется, таблица остаётся на том же месте, пара позеленела. Кликайте следующую.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">3</span>
+<span class="instr-step-text">Если пара сомнительная — закройте окно кнопкой <b>«Отмена»</b> или клавишей <b>Escape</b> и переходите к следующей строке. Не нужно «отклонять» — просто пропускайте, спорные пары останутся в списке.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">4</span>
+<span class="instr-step-text">Когда разобрали все «высокие» — переключитесь на <b>«55–79% средние»</b>. Здесь уже стоит читать внимательнее. Используйте <b>фильтр по категории</b>, чтобы работать с одним товарным разделом за раз: так легче держать контекст и не ошибаться.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">5</span>
+<span class="instr-step-text">Периодически поглядывайте на счётчики в плитках статистики: они уменьшаются по мере подтверждений. Когда всё обработано — сохраните файл памяти через кнопку в боковой панели.</span>
+</div>
+</div>
+</div>
+
+<div class="instr-tool-panel" style="margin-bottom:20px;">
+<div style="font-size:var(--fz-sm);font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Дополнительно в окне подтверждения</div>
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:140px;">Escape / Отмена</span>
+<span class="instr-desc-text">Закрывает окно без добавления в базу. Пара остаётся в списке нетронутой — можно вернуться к ней позже. Ничего не теряется.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:140px;">Зелёные строки</span>
+<span class="instr-desc-text">Подтверждённые пары остаются в таблице с зелёным фоном — вы всегда видите что уже обработано. Они не мешают навигации, но отражают реальное состояние базы.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:140px;">Вкладка «Бренды»</span>
+<span class="instr-desc-text">Пока открыто окно пары — можно переключиться на вкладку <b>«Бренды»</b> и одним кликом добавить бренд прямо из этих наименований. Слова из обоих названий уже извлечены и предложены кликабельными пилюлями. Нажимайте нужные — они сами попадают в поля «Канонический бренд», «Кросскоды», «Антонимы». Нажмите «Сохранить бренд», затем вернитесь на вкладку «Штрихкоды» и подтвердите пару. Два результата за один клик.</span>
+</div>
+</div>
+</div>
+
+<!-- KEY MARKETING BLOCK: HISTORY -->
+<div class="instr-privacy-block">
+<div class="instr-privacy-block-title">↩ История действий — ни одна ошибка не фатальна</div>
+<div class="instr-privacy-block-body">Каждое подтверждение записывается в историю. Если вы случайно подтвердили неверную пару — разверните раздел «История действий» над таблицей и нажмите <b>«↩ Отменить»</b> рядом с нужной записью. Связь удалится из базы, пара вернётся в список. Работайте быстро — ошибки легко исправить.</div>
+</div>
+
+<!-- SEARCH AND FILTERS -->
+<div class="instr-section-label">Поиск, фильтры и настройки</div>
+<div class="instr-tool-panel">
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn">Строка поиска</span>
+<span class="instr-desc-text">Фильтрует пары по наименованию, штрихкоду или названию файла. По умолчанию поиск расширяется синонимами брендов из базы — «чай» найдёт и строки с «tea», если они связаны в базе брендов.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Точный поиск</span>
+<span class="instr-desc-text">Отключает расширение синонимами — ищет строго по введённому тексту. Удобно когда нужно найти конкретный артикул или штрихкод.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Категории</span>
+<span class="instr-desc-text">Выпадающий список слов из найденных наименований. Выбор категории оставляет только пары, в которых есть это слово — быстрый способ проработать конкретный товарный раздел.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Чипы файлов</span>
+<span class="instr-desc-text">Полоска с названиями загруженных файлов появляется после поиска. Нажмите на файл — пары с его участием скроются. Нажмите снова — вернутся. Удобно когда нужно сосредоточиться на парах между конкретными поставщиками.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn">Чекбокс «Файл памяти»</span>
+<span class="instr-desc-text">Показывается, если файл памяти загружен. Когда включён — уже известные кросскоды исключаются из результатов и не предлагаются повторно. Отключите, чтобы увидеть все пары включая уже связанные.</span>
+</div>
+</div>
+</div>
+
+<!-- TIPS GRID -->
+<div class="instr-section-label">Важные особенности</div>
+<div class="dash-instr-grid ax-004">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Мгновенный эффект</span></div>
+<div class="dash-instr-card-body">После каждого подтверждения таблица мониторинга пересчитывается автоматически — переходить на другую вкладку не нужно. Можно подтверждать пачкой и сразу видеть рост покрытия.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">База брендов улучшает результаты</span></div>
+<div class="dash-instr-card-body">Перед запуском заполните «База кросскодов → Бренды» синонимами и вариантами написания. Поиск кросскодов использует её при расчёте оценок: синонимы дают <b>+20%</b> к паре, антонимы исключают ложные совпадения полностью. Пара 62% → становится 82%.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Артикулы как кросскоды</span></div>
+<div class="dash-instr-card-body">Если поставщик не даёт штрихкоды, а только артикулы — на вкладке «Загрузка прайсов» назначьте колонку с артикулом как «Штрихкод». Тогда поиск кросскодов свяжет артикулы поставщика с вашими кодами.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Предупреждение об изменениях</span></div>
+<div class="dash-instr-card-body">Если после запуска поиска состав файлов изменился — появится жёлтая плашка «результаты могут быть неактуальны». Запустите поиск повторно, чтобы учесть новые файлы.</div>
+</div>
+</div>
+<div class="dash-instr-tip"><b>Оптимальный порядок:</b> (1) загрузите файл памяти; (2) пополните «Бренды» — добавьте синонимы для частых написаний в ваших прайсах; (3) запустите поиск кросскодов — оценки сразу станут точнее; (4) нажмите «≥80% высокие» и подтвердите очевидные пары; (5) пройдитесь по «55–79%» по категориям. Так можно поднять покрытие с 60% до 90%+ за 15 минут.</div>
+</div>
+</div>
+</div>
+</div><!-- /pane-matcher -->
+<!-- ═══ PANE: JSON EDITOR ═══ -->
+<div class="main-pane" id="pane-jsoneditor">
+<div class="container">
+<!-- Unified pane title -->
+<div class="pane-title">
+<div class="pane-title-icon"><i data-lucide="database"></i></div>
+<div class="pane-title-text">
+<h2>База кросскодов</h2>
+<p>Штрихкоды, бренды и кросскоды для связывания товаров</p>
+</div>
+<div class="pane-title-extra">
+<button class="btn help-btn" id="helpBtnJsoneditor" onclick="openHelpModal('jsoneditor')" title="Инструкция по работе с этой вкладкой"><i data-lucide="help-circle"></i></button>
+</div>
+</div>
+<!-- Блок контакта пользователя -->
+<div id="userContactBlock" style="margin-bottom:14px;padding:10px 14px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <div id="userContactEmpty" style="display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;">
+    <div style="font-size:15px;"><i data-lucide="user"></i></div>
+    <div style="flex:1;min-width:180px;">
+      <div style="font-size:var(--fz-sm);font-weight:600;color:var(--text-primary);">Укажите ваш контакт</div>
+      <div style="font-size:var(--fz-xs);color:var(--text-secondary);margin-top:1px;">Телефон, email или Telegram — чтобы разработчик мог связаться с вами при ошибке</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input id="userContactInput" placeholder="+7 900... / mail@... / @username" style="padding:5px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-md);font-size:var(--fz-md);font-family:'Inter',sans-serif;background:var(--surface);width:240px;" type="text"/>
+      <button class="btn btn-success" onclick="window.saveUserContact()"><i data-lucide="save"></i> Сохранить</button>
+    </div>
+  </div>
+  <div id="userContactFilled" style="display:none;align-items:center;gap:10px;flex:1;flex-wrap:wrap;">
+    <div style="font-size:15px;"></div>
+    <div style="flex:1;">
+      <div style="font-size:var(--fz-xs);color:var(--text-muted);text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">Ваш контакт</div>
+      <div id="userContactValue" style="font-size:var(--fz-base);font-weight:600;color:var(--text-primary);margin-top:1px;"></div>
+    </div>
+    <button class="btn" onclick="window.editUserContact()"><i data-lucide="pencil"></i> Изменить</button>
+  </div>
+</div>
+<div style="display:flex;gap:4px;align-items:center;padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:14px;">
+<div class="syn-subtab active has-tip ax-012" data-subtab="barcodes" data-tip="Группы эквивалентных штрихкодов: один товар — разные коды у разных поставщиков. Добавьте их в одну группу, и система автоматически найдёт совпадения в мониторинге" id="subtab-barcodes">
+      <i data-lucide="barcode"></i> Штрихкоды <span class="subtab-badge subtab-badge--green" id="bcCountBadge">0</span>
+</div>
+<div class="syn-subtab has-tip ax-012" data-subtab="brands" data-tip="Словарь брендов: канонические написания и их синонимы (аббревиатуры, варианты на кириллице/латинице). Используется для фильтрации по категории в мониторинге" id="subtab-brands">
+      <i data-lucide="tag"></i> Бренды <span class="subtab-badge subtab-badge--green" id="brandCountBadge">0</span>
+</div>
+</div>
+<!-- Barcodes subtab -->
+<div class="syn-subtab-pane active" id="subpane-barcodes">
+<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px;">
+<button class="btn btn-success" disabled="" id="jeExportXlsxBtn" title="Экспорт в Excel"><i data-lucide="save"></i> Экспорт Excel</button>
+<button class="btn" id="jeImportXlsxBtn"><i data-lucide="file-up"></i> Импорт Excel</button>
+<input accept=".xlsx,.xls" id="jeXlsxFileIn" style="display:none;" type="file"/>
+<div class="toolbar-sep"></div>
+<label class="btn ax-013" title="Загрузить файл-память JSON">
+        <i data-lucide="hard-drive"></i> Загрузить файл памяти
+        <input accept=".json" class="file-input-hidden" id="bcLoadJsonFileIn" type="file"/>
+</label>
+<button class="btn btn-success" id="jeDownloadJsonBtn" onclick="downloadCurrentSynonyms()" title="Скачать файл-память: штрихкоды, бренды и настройки колонок"><i data-lucide="save"></i> Скачать файл памяти</button>
+<div class="toolbar-sep"></div>
+<button class="btn btn-secondary" disabled="" id="jeUndoBtn" title="Отменить (Ctrl+Z)"><i data-lucide="undo-2"></i></button>
+<button class="btn btn-secondary" disabled="" id="jeRedoBtn" title="Повторить (Ctrl+Y)"><i data-lucide="redo-2"></i></button>
+<div class="toolbar-sep"></div>
+<button class="btn btn-danger" disabled="" id="jeClearBtn"><i data-lucide="trash-2"></i> Очистить</button>
+</div>
+<div class="je-newrow">
+<span class="je-row-label">Новая группа:</span>
+<input class="je-inp" id="jeNName" placeholder="Название товара" style="flex:2;min-width:160px;"/>
+<input class="je-inp je-mono" id="jeNMainBC" placeholder="Главный ШК" style="flex:1;min-width:120px;"/>
+<input class="je-inp je-mono" id="jeNSyns" placeholder="Кросскоды через запятую" style="flex:2;min-width:180px;"/>
+<button class="btn btn-success" id="jeCreateBtn"><i data-lucide="plus"></i> Добавить</button>
+<button class="btn" id="jeClearFormBtn"><i data-lucide="x"></i> Сбросить</button>
+</div>
+<div id="jeStatusRow" style="display:none;gap:16px;align-items:center;font-size:11px;color:var(--text-secondary);padding:4px 2px;margin-bottom:6px;">
+<span id="jeStatus">Наименований: 0</span>
+<span id="jeDupStatus" style="color:var(--red);display:none;"></span>
+</div>
+<div class="je-search-row" id="jeSearchRow" style="display:none;">
+<input class="search-input" disabled="" id="jeSearchInp" placeholder="Поиск по ШК / названию..." style="flex:1;min-width:0;"/>
+</div>
+<div class="empty-state" id="jeEmpty">
+<div class="dash-instr ax-006">
+
+<!-- MARKETING HERO -->
+<div class="marketing-hero">
+<div style="position:absolute;top:-18px;right:-18px;width:130px;height:130px;background:rgba(255,255,255,0.04);border-radius:50%;pointer-events:none;"></div>
+<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:8px;">База кросскодов → Штрихкоды</div>
+<div style="font-size:17px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:10px;">Свяжите разные коды одного товара —<br/>мониторинг найдёт цену у любого поставщика.</div>
+<div style="font-size:var(--fz-sm);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:18px;">Здесь хранятся группы эквивалентных штрихкодов: ваш код и коды того же товара у поставщиков. При сравнении система ищет совпадение по всем кодам группы сразу — не важно, что написано в прайсе поставщика. Чем полнее база — тем выше покрытие в мониторинге. База сохраняется в файле памяти JSON и мгновенно восстанавливается при следующей загрузке.</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+<div class="marketing-stat-card"><div class="marketing-stat-val">Группа</div><div class="marketing-stat-lbl">главный ШК + кросскоды поставщиков</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">50</div><div class="marketing-stat-lbl">шагов отмены для любых изменений</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Excel</div><div class="marketing-stat-lbl">импорт и экспорт всей базы</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">+</div><div class="marketing-stat-lbl">добавление прямо из таблицы мониторинга</div></div>
+</div>
+</div>
+
+<!-- WHY -->
+<div class="instr-why-block">
+<div class="instr-block-title">Как база штрихкодов влияет на мониторинг</div>
+<div class="instr-body-text--mb">Мониторинг цен сопоставляет товары <b>по штрихкоду</b>. Если ваш код и код поставщика совпадают — всё работает автоматически. Если не совпадают — строка в мониторинге остаётся без цены, даже если товар фактически есть у поставщика. База кросскодов решает эту проблему: вы однажды записываете «ваш код = код поставщика», и с этого момента система всегда их связывает.</div>
+<div class="instr-body-text">Один и тот же штрихкод может быть главным <b>или</b> кросскодом, но не может входить в две разные группы одновременно — это дубль. Дубли подсвечиваются красным и показываются в строке статистики над таблицей.</div>
+</div>
+
+<!-- CONCEPTS -->
+<div class="instr-section-label">Структура записи</div>
+<div class="dash-instr-grid">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Название товара</span></div>
+<div class="dash-instr-card-body">Произвольный текст для вашего удобства — чтобы понимать, о каком товаре речь. В сравнении не участвует. Программа подставляет название автоматически из ваших наименований.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Главный штрихкод</span></div>
+<div class="dash-instr-card-body">Ваш основной код товара — тот, что стоит в вашем прайсе. Именно вокруг него строится группа. При объединении двух групп главным становится код первой.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Кросскоды</span></div>
+<div class="dash-instr-card-body">Альтернативные коды того же товара у поставщиков. В группе может быть любое количество кросскодов. Система ищет совпадение по главному коду <b>и</b> по всем кросскодам одновременно.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title" style="color:var(--red);">Дубли</span></div>
+<div class="dash-instr-card-body">Один код не может входить в две группы. Дубль — ошибка: система не поймёт, к какой группе он относится. Дублирующие коды подсвечены <b style="color:var(--red);">красным</b>. Количество дублей видно в строке над таблицей.</div>
+</div>
+</div>
+
+<!-- HOW TO ADD MANUALLY -->
+<div class="instr-how-block">
+<div class="instr-how-title">Как добавить группу вручную</div>
+<div class="instr-steps-list">
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 1</span>
+<span class="instr-step-text">В строке над таблицей заполните: <b>Название товара</b> (для себя), <b>Главный ШК</b> — ваш код из прайса, <b>Кросскоды через запятую</b> — коды того же товара у поставщиков. Кросскоды необязательны: можно добавить позже прямо в таблице.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 2</span>
+<span class="instr-step-text">Нажмите <b>«Добавить»</b> — запись появится в таблице, мониторинг сразу пересчитается. Кросскоды можно добавлять прямо в строке таблицы: кликните в поле кросскодов, введите код и нажмите <b>Enter</b>.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 3</span>
+<span class="instr-step-text">Если код отображается красным — это дубль. Найдите, в какой группе он уже есть, и удалите лишнюю запись. Кнопка ↩ <b>Отмена</b> откатит последнее действие.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 4</span>
+<span class="instr-step-text">Когда база пополнена — нажмите <b>«Скачать файл памяти»</b> в тулбаре. Кнопка сохранения также появляется в левой боковой панели сразу при любом изменении.</span>
+</div>
+</div>
+</div>
+
+<!-- FAST WAY FROM MONITOR -->
+<div class="instr-privacy-block">
+<div class="instr-privacy-block-title">Быстрый способ: кнопка «+» прямо в таблице мониторинга</div>
+<div class="instr-privacy-block-body">В таблице мониторинга рядом со штрихкодом каждого товара есть маленькая кнопка <b>+</b>. Нажмите её — откроется диалог добавления в базу: главный штрихкод уже подставлен, а кросскоды от поставщиков предложены списком с чекбоксами. Выберите нужные, укажите название и нажмите «Добавить». Если штрихкод уже есть в базе — вместо «+» отображается зелёный значок <b>✓</b>. Это самый быстрый способ наполнять базу прямо в процессе работы с мониторингом.</div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="instr-section-label">Панель инструментов</div>
+<div class="instr-tool-panel">
+<div class="instr-items-list">
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled=""><i data-lucide="save"></i> Экспорт Excel</button>
+<span class="instr-desc-text">Выгружает всю базу в Excel-таблицу: три колонки — штрихкод, название, кросскоды через запятую. Удобно для просмотра, массового редактирования или передачи коллеге.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn instr-demo-btn" disabled=""><i data-lucide="file-up"></i> Импорт Excel</button>
+<span class="instr-desc-text">Загружает группы из Excel-файла. Программа сама определяет колонки штрихкода, названия и кросскодов по заголовкам. Если есть конфликты с существующей базой — предложит на выбор: <b>перезаписать</b>, <b>пропустить</b> или <b>объединить кросскоды</b>.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn instr-demo-btn" disabled=""><i data-lucide="hard-drive"></i> Загрузить файл памяти</button>
+<span class="instr-desc-text">Восстанавливает базу штрихкодов, базу брендов и настройки колонок из JSON-файла. Загружайте в начале каждой сессии — все накопленные кросскоды применятся сразу.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled=""><i data-lucide="save"></i> Скачать файл памяти</button>
+<span class="instr-desc-text">Сохраняет всё сразу: <b>штрихкоды + кросскоды, базу брендов и шаблоны колонок</b>. Один файл — полный бэкап настроек. Также доступна из боковой панели, когда есть несохранённые изменения.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled=""><i data-lucide="undo-2"></i> / <i data-lucide="redo-2"></i></button>
+<span class="instr-desc-text">Отмена и повтор действий — работают для любых изменений базы: добавление, удаление, переименование, добавление кросскода. Глубина истории <b>50 шагов</b>. Также доступны через Ctrl+Z / Ctrl+Y.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-danger instr-demo-btn" disabled=""><i data-lucide="trash-2"></i> Очистить</button>
+<span class="instr-desc-text">Полностью удаляет все записи базы штрихкодов. Запрашивает подтверждение. Отменить через ↩ нельзя — убедитесь, что файл памяти скачан.</span>
+</div>
+</div>
+</div>
+
+<!-- TIPS -->
+<div class="instr-section-label">Важные особенности</div>
+<div class="dash-instr-grid ax-004">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Мгновенный эффект</span></div>
+<div class="dash-instr-card-body">После добавления или изменения группы мониторинг пересчитывается автоматически — не нужно переходить на другую вкладку или перезагружать страницу.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Поиск по базе</span></div>
+<div class="dash-instr-card-body">Строка поиска над таблицей ищет одновременно по названию товара и по всем штрихкодам группы — и по главному, и по кросскодам. Достаточно ввести любой из кодов.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Артикулы вместо ШК</span></div>
+<div class="dash-instr-card-body">Если поставщик не даёт штрихкоды — назначьте его колонку с артикулом как «Штрихкод» на вкладке загрузки. Тогда артикулы можно связывать с вашими кодами через эту базу.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Автоматически: Поиск кросскодов</span></div>
+<div class="dash-instr-card-body">Вкладка «Поиск кросскодов» анализирует наименования и предлагает пары. Подтверждённые пары попадают прямо сюда — не нужно вводить коды вручную.</div>
+</div>
+</div>
+<div class="dash-instr-tip"><b>Оптимальный порядок работы:</b> (1) загрузите файл памяти в начале сессии; (2) запустите «Поиск кросскодов» — большинство связей добавится автоматически; (3) для оставшихся используйте кнопку «+» прямо в мониторинге; (4) скачайте обновлённый файл памяти в конце сессии.</div>
+</div>
+</div>
+<div class="table-wrapper" id="jeTableWrap" style="margin-top:0;max-height:60vh;padding-bottom:60px;">
+
+<table id="jeTable" style="display:none;table-layout:fixed;width:100%;">
+<thead><tr>
+<th style="width:36px;">#</th>
+<th style="min-width:260px;">Название</th>
+<th style="width:160px;">Главный ШК</th>
+<th>Кросскоды <span style="font-weight:400;font-size:10px;color:rgba(255,255,255,0.65)">(Enter для добавления)</span></th>
+<th style="width:40px;"></th>
+</tr></thead>
+<tbody id="jeTbody"></tbody>
+</table>
+</div>
+</div>
+<!-- Brands subtab -->
+<div class="syn-subtab-pane" id="subpane-brands">
+<div class="brand-subtab-toolbar">
+<button class="btn btn-success" id="brandOpenAddModalBtn"><i data-lucide="plus"></i> Добавить бренд</button>
+<div class="toolbar-sep"></div>
+<label class="btn ax-013" title="Загрузить файл-память JSON">
+        <i data-lucide="hard-drive"></i> Загрузить файл памяти
+        <input accept=".json" class="file-input-hidden" id="brandLoadJsonFileIn" type="file"/>
+</label>
+<button class="btn btn-success" id="brandDownloadJsonBtn" onclick="downloadCurrentSynonyms()" title="Скачать файл-память: штрихкоды, бренды и настройки колонок"><i data-lucide="save"></i> Скачать файл памяти</button>
+<div class="toolbar-sep"></div>
+<button class="btn btn-danger" id="brandClearAllBtn" title="Очистить словарь брендов"><i data-lucide="trash-2"></i> Очистить всё</button>
+</div>
+<div id="brandSearchArea" style="display:none;">
+<div class="brand-search-row search-box--above-table filter-row">
+<input class="search-input" id="brandSearchInp" placeholder="Поиск по главной форме, синонимам, антонимам..." style="flex:1;min-width:0;"/>
+<button class="btn btn-secondary" id="brandConflictFilterBtn" title="Показать только бренды с конфликтами"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:middle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Конфликты</button>
+</div>
+</div>
+<div class="brand-empty" id="brandEmpty">
+<div class="dash-instr ax-006">
+<!-- MARKETING HERO -->
+<div class="marketing-hero">
+<div style="position:absolute;top:-18px;right:-18px;width:130px;height:130px;background:rgba(255,255,255,0.04);border-radius:50%;pointer-events:none;"></div>
+<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:8px;">База кросскодов → Бренды</div>
+<div style="font-size:17px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:10px;">Научите программу понимать,<br/>что «нескафе» и «nescafe» — одно слово.</div>
+<div style="font-size:var(--fz-sm);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:18px;">База брендов — это словарь синонимов для поиска кросскодов и фильтра категорий. Добавьте варианты написания одного и того же слова в одну группу — и система начнёт находить совпадения, которые раньше пропускала. Каждая группа описывает ровно одно понятие: бренд, вкус или тип упаковки — но не всё сразу. Антонимы позволяют точно разграничить похожие группы и исключить ложные пары.</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+<div class="marketing-stat-card"><div class="marketing-stat-val">+20%</div><div class="marketing-stat-lbl">бонус к оценке пары при совпадении синонимов</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">0%</div><div class="marketing-stat-lbl">оценка пары при совпадении антонима — пара исключена</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Бренды</div><div class="marketing-stat-lbl">nescafe = нескафе = nescafé</div></div>
+<div class="marketing-stat-card"><div class="marketing-stat-val">Упаковка</div><div class="marketing-stat-lbl">пэт = pet = пластик = бутылка</div></div>
+</div>
+</div>
+<!-- WHY YOU NEED THIS -->
+<div class="instr-why-block">
+<div class="instr-block-title">Что делает эта база и как она связана с поиском кросскодов</div>
+<div class="instr-body-text--mb">Один и тот же бренд в разных прайсах пишется по-разному: <b>«нескафе»</b>, <b>«nescafe»</b>, <b>«nescafé»</b> — для системы это три разных слова. Когда «Поиск кросскодов» сравнивает наименования, база брендов применяется <b>до расчёта оценки</b>: синонимы приводятся к одному главному виду, и оценка схожести автоматически <b>вырастает на 20%</b>. Пара, которая без базы получила бы 62% (средняя), с базой получит 82% (высокая) — и сразу попадёт в первый список для проверки.</div>
+<div class="instr-body-text--mb">⚠ <b>Важно:</b> каждая группа описывает ровно одно понятие. Не смешивайте бренд и тип товара в одной группе. Например, «nescafe» и «gold» — это две разные группы: «gold» встречается у многих брендов («Якобс Голд», «Нескафе Голд») и является признаком сорта, а не бренда. Если добавить «gold» как синоним «nescafe», программа начнёт связывать товары разных брендов.</div>
+<div class="instr-body-text">Антонимы работают жёстче: если в паре встретился антоним одной из групп — оценка становится <b>ровно 0%</b> и пара полностью исключается из результатов. Это защищает от ложных совпадений: «чёрный чай» и «зелёный чай» больше никогда не окажутся в одной паре, если «зелёный» стоит антонимом в группе «чёрный».</div>
+</div>
+
+<!-- NON-BRAND USE CASES -->
+<div class="instr-privacy-block">
+<div class="instr-privacy-block-title">Это не только про бренды — это про любые синонимы в наименованиях</div>
+<div class="instr-privacy-block-body">Называйте кнопку «Добавить бренд» условно — добавлять можно любые смысловые группы. Примеры того, что реально помогает находить совпадения:<br/><br/>
+<b>Бренды (только варианты написания, без типов товара):</b> nescafe / нескафе / nescafé / нескафэ<br/>
+<b>Сорта и вкусы — отдельными группами:</b> classic / классик · gold / голд / голден · green / зелёный<br/>
+<b>Типы упаковки:</b> пэт / pet / пластик / бутылка<br/>
+<b>Стекло:</b> стекло / стеклобанка / стб / glass<br/>
+<b>Объёмы (если написаны словами):</b> полтора / 1.5л / 1500мл<br/>
+<b>Типы продукта:</b> безалкогольный / безалк / non-alcoholic<br/><br/>
+⚠ <b>Предпочитайте однословные записи</b> — они надёжнее и реже вызывают конфликты. Например, лучше добавить просто «классик» и «classic», чем «кофе классик» или «classic blend». Короткие аббревиатуры из 1–2 символов («б», «ст», «пл») лучше вообще не добавлять: они почти всегда окажутся в нескольких группах и создадут конфликт.<br/><br/>
+Чем полнее словарь однозначных синонимов — тем больше пар найдёт поиск кросскодов и тем точнее работает фильтр категорий в мониторинге.</div>
+</div>
+
+<!-- CONCEPTS GRID -->
+<div class="instr-section-label">Три ключевых понятия</div>
+<div class="dash-instr-grid">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Главная форма</span></div>
+<div class="dash-instr-card-body">Главное «эталонное» написание группы — именно его вы видите в таблице. Все синонимы при поиске приводятся к этой форме. Используйте короткое и понятное слово: «nescafe», «чай», «пэт», «клубника». Одна группа = одно понятие.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title">Синонимы</span></div>
+<div class="dash-instr-card-body">Все варианты написания одного понятия: кириллица, латиница, аббревиатуры, опечатки, сокращения. При поиске кросскодов любой синоним приводится к главной форме — оценка пары растёт на <b>+20%</b>. Предпочитайте однословные записи.</div>
+</div>
+<div class="dash-instr-card" style="border-left:3px solid var(--red);">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title" style="color:var(--red);">Антонимы</span></div>
+<div class="dash-instr-card-body">Слова, которые <b>исключают</b> пару полностью. Если в одном наименовании есть антоним группы — оценка становится 0%, пара не предлагается. Используйте для разграничения: «зелёный», «белый» — антонимы группы «чёрный».</div>
+</div>
+<div class="dash-instr-card ax-001" style="border-left:3px solid var(--amber-dark);">
+<div class="dash-instr-card-header"><span class="ax-000"></span><span class="dash-instr-card-title" style="color:var(--amber-dark);">Конфликты</span></div>
+<div class="dash-instr-card-body">Одно слово не может быть синонимом в двух разных группах — программа не поймёт, к чему его отнести. Конфликтные слова подсвечиваются <b style="color:var(--amber-dark);">жёлтым</b>. Кнопка «Конфликты» выводит только проблемные записи.</div>
+</div>
+</div>
+<!-- HOW TO ADD -->
+<div class="instr-how-block">
+<div class="instr-how-title">Как добавить группу</div>
+<div class="instr-steps-list">
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 1</span>
+<span class="instr-step-text">Нажмите <b>«Добавить бренд»</b>. В поле <b>«Главная форма»</b> введите одно короткое слово: «nescafe», «чай», «пэт», «клубника», «classic». Одна группа — одно понятие. Не добавляйте сюда тип товара: «gold», «classic» или «light» — это отдельные группы, иначе программа начнёт смешивать разные товары.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 2</span>
+<span class="instr-step-text">В поле <b>«Синонимы»</b> через запятую перечислите все варианты написания этого одного слова: «нескафе, nescafé, нескафэ». Включайте опечатки и аббревиатуры — они часто встречаются в прайсах поставщиков. Избегайте однобуквенных и двухбуквенных значений — они почти всегда вызывают конфликт.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 3</span>
+<span class="instr-step-text"><b>(Рекомендуется для схожих групп)</b> В поле <b>«Антонимы»</b> укажите слова-исключения. Для группы «чёрный» → антонимы «зелёный, белый, green, white» — без этого поиск кросскодов может смешать разные виды чая.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 4</span>
+<span class="instr-step-text">Нажмите <b>«Сохранить бренд»</b>. Группа мгновенно начинает влиять на следующий запуск «Поиска кросскодов» и на фильтр «Категории» в мониторинге.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-step-badge">Шаг 5</span>
+<span class="instr-step-text">Нажмите <b>«Скачать файл памяти»</b> — кнопка также появляется в левой боковой панели при любом изменении. При следующей сессии загрузите файл памяти первым — все группы восстановятся.</span>
+</div>
+</div>
+</div>
+
+<!-- SHORTCUTS FROM MATCHER -->
+<div class="instr-section-label">Быстрый способ: прямо из окна подтверждения пары</div>
+<div class="instr-why-block">
+<div class="instr-block-title">Добавление синонимов без перехода на эту вкладку</div>
+<div class="instr-body-text">Когда вы работаете на вкладке «Поиск кросскодов» и открываете окно пары — в нём есть вкладка <b>«Бренды»</b>. Слова из обоих наименований уже извлечены и предложены кнопками — достаточно нажать нужные, они сразу попадут в поля «Главная форма», «Синонимы» или «Антонимы». Нажмите «Сохранить бренд» — группа добавится в базу, не покидая страницу. Затем переключитесь на вкладку «Штрихкоды» в том же окне и подтвердите связь кодов. Два дела за один открытый диалог.</div>
+</div>
+
+<!-- CONFLICTS SECTION -->
+<div class="instr-section-label">Конфликты — как избежать ложных результатов</div>
+<div class="instr-tool-panel" style="border-left:3px solid var(--amber-dark);">
+<div style="font-size:var(--fz-sm);font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">⚠ Что такое конфликт и почему он опасен</div>
+<div class="instr-body-text" style="margin-bottom:14px;">Конфликт возникает когда одно слово является кросскодом <b>в двух разных группах</b> одновременно. Пример: «ст» стоит и в группе «стакан», и в группе «ст/б» (стеклобанка). Программа не поймёт, к чему привести это слово при нормализации — результат непредсказуем. Конфликтные слова в поиске кросскодов могут давать <b>ложные совпадения</b> или, наоборот, не давать нужных пар.</div>
+<div class="instr-steps-list--md">
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;color:var(--amber-dark);">Как обнаружить</span>
+<span class="instr-desc-text">Конфликтные слова подсвечены <b style="color:var(--amber-dark);">жёлтым фоном</b> прямо в таблице — видно сразу без поиска. Кнопка <b>«Конфликты»</b> над таблицей фильтрует только проблемные записи и показывает их счётчик.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;color:var(--amber-dark);">Как исправить</span>
+<span class="instr-desc-text">Нажмите кнопку редактирования в строке с конфликтом. Уберите спорное слово из одной из групп или замените его более уникальным синонимом. Сохраните — конфликт снимется автоматически.</span>
+</div>
+<div class="instr-step-row">
+<span class="instr-feature-btn" style="min-width:160px;color:var(--amber-dark);">Частые ошибки</span>
+<span class="instr-desc-text">Короткие аббревиатуры («ст», «б», «пл», «к») легко оказываются в нескольких группах. Используйте полную форму: вместо «ст» → «стекло» или «стеклобанка», вместо «б» → «бутылка». Одиночные буквы и двухбуквенные сочетания как синонимы лучше не добавлять вообще — они дадут больше вреда, чем пользы.</span>
+</div>
+</div>
+</div>
+
+<!-- TOOLBAR GUIDE -->
+<div class="instr-section-label">Панель инструментов</div>
+<div class="instr-tool-panel">
+<div class="instr-items-list">
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled="">Добавить бренд</button>
+<span class="instr-desc-text">Открывает форму: главная форма, синонимы, антонимы. Подходит для любой смысловой группы — бренд, вкус, упаковка, тип продукта. Одна группа = одно понятие.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-secondary instr-demo-btn" disabled="">Конфликты (N)</button>
+<span class="instr-desc-text">Показывает только записи с конфликтными словами. N — количество проблемных групп. Нажмите повторно — фильтр снимается. Регулярно проверяйте после пополнения базы.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn instr-demo-btn" disabled=""><i data-lucide="hard-drive"></i> Загрузить файл памяти</button>
+<span class="instr-desc-text">Восстанавливает базу брендов, штрихкоды и настройки колонок из JSON. Загружайте в начале каждой сессии.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-success instr-demo-btn" disabled=""><i data-lucide="save"></i> Скачать файл памяти</button>
+<span class="instr-desc-text">Сохраняет всё сразу: бренды, штрихкоды и настройки. Также появляется в боковой панели при любом несохранённом изменении.</span>
+</div>
+<div class="instr-feature-row">
+<button class="btn btn-danger instr-demo-btn" disabled="">Очистить всё</button>
+<span class="instr-desc-text">Полностью удаляет базу брендов. Требует подтверждения. Убедитесь, что файл памяти скачан — отменить нельзя.</span>
+</div>
+</div>
+</div>
+
+<!-- FEATURES GRID -->
+<div class="instr-section-label">Дополнительные возможности</div>
+<div class="dash-instr-grid ax-004">
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-002"></span><span class="dash-instr-card-title">Поиск по базе</span></div>
+<div class="dash-instr-card-body">Строка поиска ищет одновременно по главной форме, всем синонимам и антонимам — достаточно ввести любое слово из группы.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-002"></span><span class="dash-instr-card-title">Редактирование</span></div>
+<div class="dash-instr-card-body">Нажмите иконку редактирования в строке таблицы — откроется форма с теми же полями. Нажмите на жёлтое слово с конфликтом — форма сразу откроется на нужной группе.</div>
+</div>
+<div class="dash-instr-card ax-001">
+<div class="dash-instr-card-header"><span class="ax-002"></span><span class="dash-instr-card-title">Мгновенный эффект</span></div>
+<div class="dash-instr-card-body">Добавленная группа начинает работать в поиске кросскодов при <b>следующем запуске</b> — нажмите «Запустить поиск» заново, чтобы оценки пересчитались с учётом новых синонимов.</div>
+</div>
+</div>
+<!-- TIP -->
+<div class="dash-instr-tip"><b>Рекомендуемый порядок:</b> сначала добавьте базу брендов (самые частые слова из ваших прайсов, по одному слову в группу), затем запустите «Поиск кросскодов» — оценки сразу станут точнее. После подтверждения пар скачайте файл памяти: и бренды, и кросскоды сохранятся вместе. В мониторинге фильтр «Категории» автоматически учитывает все добавленные синонимы — введите «чай», получите все строки с «tea», «чаёк», «tea bags» из вашей базы.</div>
+</div>
+</div>
+<div id="brandTableWrap" style="display:none;">
+<table class="data-table" id="brandDataTable">
+<colgroup>
+<col class="col-num"/>
+<col class="col-canon"/>
+<col class="col-syns"/>
+<col class="col-ants"/>
+<col class="col-acts"/>
+</colgroup>
+<thead>
+<tr>
+<th style="width:36px;">#</th>
+<th style="width:160px;">Главная форма</th>
+<th>Синонимы</th>
+<th style="width:30%;">Антонимы</th>
+<th style="width:64px;text-align:center;">Действия</th>
+</tr>
+</thead>
+<tbody id="brandList"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div><!-- /pane-jsoneditor -->
+<!-- ═══ TOAST ═══ -->
+<div id="toastRack"></div>
+<!-- ═══ BRAND EDIT MODAL ═══ -->
+<div class="modal-overlay" id="brandEditModal" style="z-index:10005;">
+<div class="modal-inner" style="width:560px;">
+<div class="modal-header" style="background:var(--accent);border-bottom-color:var(--accent-dark);">
+<span style="color:#fff;font-weight:600;">Редактировать бренд</span>
+<button class="modal-close-x ax-009" onclick="brandCloseEdit()">✕</button>
+</div>
+<div class="modal-body" style="max-height:70vh;">
+<input id="beEditKey" type="hidden"/>
+<div class="modal-field"><label for="beCanon">Главная форма *</label><input id="beCanon" placeholder="tchibo"/></div>
+<div class="modal-field"><label for="beSyns">Синонимы (через запятую)</label><textarea id="beSyns" placeholder="чибо, тибио, тчибо" rows="3"></textarea></div>
+<div class="modal-field"><label class="text-red" for="beAnti">Антонимы (через запятую)</label><textarea id="beAnti" placeholder="другие бренды кофе, которые не должны совпасть" rows="3"></textarea></div>
+</div>
+<div class="modal-footer">
+<button class="btn" onclick="brandCloseEdit()">Отмена</button>
+<button class="btn btn-success" onclick="brandSaveEdit()"><i data-lucide="save"></i> Сохранить</button>
+</div>
+</div>
+</div>
+<!-- ═══ MATCH CONFIRM MODAL ═══ -->
+<div class="modal-overlay" id="matchConfirmModal" style="z-index:10000;">
+<div class="modal-inner w640">
+<div class="modal-header">
+<div style="display:flex;align-items:center;gap:12px;">
+<span style="font-weight:700;font-size:14px;">Добавить в базу кросскодов</span>
+<div class="modal-tabs">
+<div class="modal-tab" id="mcTabSyn" onclick="mcSwitchTab('syn')">Штрихкоды</div>
+<div class="modal-tab inactive" id="mcTabBrand" onclick="mcSwitchTab('brand')">Бренды</div>
+</div>
+</div>
+<button class="modal-close-x" onclick="closeMatchModal()">✕</button>
+</div>
+<div id="mcPaneSyn" style="padding:16px;border-top:1px solid var(--border);">
+<div style="margin-bottom:10px;font-size:13px;"><span id="mcScore"></span></div>
+<div id="mcAction" style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;padding:6px 10px;background:var(--accent-lite);border-radius:3px;border-left:3px solid var(--accent);"></div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;">
+<thead><tr>
+<th style="background:var(--accent);color:#fff;border-bottom:1px solid var(--accent-dark);padding:7px 10px;text-align:left;width:90px;font-size:var(--fz-sm);font-weight:600;letter-spacing:0.3px;">Источник</th>
+<th style="background:var(--accent);color:#fff;border-bottom:1px solid var(--accent-dark);padding:7px 10px;text-align:left;font-size:var(--fz-sm);font-weight:600;letter-spacing:0.3px;">Наименование</th>
+<th style="background:var(--accent);color:#fff;border-bottom:1px solid var(--accent-dark);padding:7px 10px;text-align:left;width:140px;white-space:nowrap;font-size:var(--fz-sm);font-weight:600;letter-spacing:0.3px;">Штрихкод</th>
+</tr></thead>
+<tbody>
+<tr><td id="mc-src1" style="border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;font-size:var(--fz-md);"></td><td id="mc-name1" style="border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:7px 10px;word-break:break-word;font-size:var(--fz-md);"></td><td id="mc-bc1" style="border-bottom:1px solid var(--border);padding:7px 10px;font-family:Inter,sans-serif;font-size:var(--fz-sm);white-space:nowrap;"></td></tr>
+<tr><td id="mc-src2" style="border-right:1px solid var(--border);padding:7px 10px;background:var(--surface-alt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;font-size:var(--fz-md);"></td><td id="mc-name2" style="border-right:1px solid var(--border);padding:7px 10px;background:var(--surface-alt);word-break:break-word;font-size:var(--fz-md);"></td><td id="mc-bc2" style="padding:7px 10px;background:var(--surface-alt);font-family:Inter,sans-serif;font-size:var(--fz-sm);white-space:nowrap;"></td></tr>
+</tbody>
+</table>
+</div>
+<div id="mcPaneBrand" style="display:none;padding:16px;border-top:1px solid var(--border);">
+<!-- Наименования товаров -->
+<div class="brand-names-preview" id="mcbNamesPreview">
+<div class="brand-names-preview-row"><span class="brand-names-preview-src" id="mcbPreviewSrc1"></span><span class="brand-names-preview-name" id="mcbPreviewName1"></span></div>
+<div class="brand-names-preview-row"><span class="brand-names-preview-src" id="mcbPreviewSrc2"></span><span class="brand-names-preview-name" id="mcbPreviewName2"></span></div>
+</div>
+<div id="mcbConflictBanner" style="background:var(--amber-bg);border:1px solid #FDE68A;border-radius:4px;padding:5px 10px;margin-bottom:12px;font-size:11px;color:var(--amber-dark);line-height:1.4;display:none;"></div>
+<div class="brand-fields-wrap">
+<!-- Канонический бренд -->
+<div class="brand-field-block">
+<label for="mcbCanon">Главная форма <span class="text-red">*</span></label>
+<div class="pills-label">Клик — добавить, повторный клик — убрать:</div>
+<div class="brand-word-pills" id="mcbPillsCanon"></div>
+<input autocomplete="off" class="modal-field modal-input-full" id="mcbCanon" placeholder="одно слово, напр. nescafe" type="text"/>
+</div>
+<!-- Кросскоды -->
+<div class="brand-field-block">
+<label for="mcbSyns">Синонимы</label>
+<div class="pills-label">Клик — добавить, повторный клик — убрать:</div>
+<div class="brand-word-pills" id="mcbPillsSyns"></div>
+<input autocomplete="off" class="modal-field modal-input-full" id="mcbSyns" placeholder="нескафе, nescafé, нескафэ..." type="text"/>
+</div>
+<!-- Антонимы -->
+<div class="brand-field-block">
+<label class="lbl--anti" for="mcbAnti">Антонимы</label>
+<div class="pills-label">Клик — добавить, повторный клик — убрать:</div>
+<div class="brand-word-pills" id="mcbPillsAnti"></div>
+<input autocomplete="off" class="modal-field modal-input-full--red" id="mcbAnti" placeholder="tchibo, jakobs..." type="text"/>
+</div>
+</div>
+<div style="min-height:16px;">
+<span class="status-text-sm" id="mcbStatus"></span>
+</div>
+</div>
+<div class="modal-footer modal-footer--sticky" id="mcFooter">
+<button class="btn" onclick="closeMatchModal()">Отмена</button>
+<button class="btn btn-success" id="mcbSaveBtn" style="display:none;"><i data-lucide="save"></i> Сохранить бренд</button>
+<button class="btn btn-success" id="mcOkBtn" onclick="confirmMatchAction()"><i data-lucide="check"></i> Подтвердить</button>
+</div>
+</div>
+</div>
+<!-- ═══ XLS IMPORT MODAL ═══ -->
+<div class="modal-overlay" id="jeXlsModal" style="z-index:10001;">
+<div class="modal-inner w400">
+<div class="modal-header">
+<span>Режим импорта Excel</span>
+<button class="modal-close-x" onclick="jeXlsModalClose(null)">✕</button>
+</div>
+<div class="modal-body">
+<p id="jeXlsModalMsg" style="font-size:var(--fz-base);line-height:1.5;"></p>
+</div>
+<div class="modal-footer modal-footer--col">
+<button class="btn btn-success ax-007" onclick="jeXlsModalClose('overwrite')"><i data-lucide="refresh-cw"></i> Перезаписать существующие</button>
+<button class="btn btn-secondary ax-007" onclick="jeXlsModalClose('skip')"><i data-lucide="skip-forward"></i> Пропустить существующие</button>
+<button class="btn btn-success ax-007" onclick="jeXlsModalClose('merge')"><i data-lucide="git-merge"></i> Объединить кросскоды</button>
+<button class="btn ax-007" onclick="jeXlsModalClose(null)">Отмена</button>
+</div>
+</div>
+</div>
+<!-- ═══ CONFIRM DIALOG ═══ -->
+<div class="modal-overlay" id="jeConfirmModal" style="z-index:10100;">
+<div class="modal-inner w380">
+<div class="modal-header">
+<span id="jeConfirmTitle">Подтверждение</span>
+<button class="modal-close-x" onclick="jeConfirmClose(false)">✕</button>
+</div>
+<div class="modal-body"><p id="jeConfirmMsg" style="font-size:var(--fz-base);line-height:1.6;"></p></div>
+<div class="modal-footer">
+<button class="btn" onclick="jeConfirmClose(false)">Отмена</button>
+<button class="btn btn-success" onclick="jeConfirmClose(true)"><i data-lucide="check"></i> Подтвердить</button>
+</div>
+</div>
+</div>
+<!-- ═══ BC ADD MODAL ═══ -->
+<div id="bcAddModal">
+<div class="modal-inner bc-add-modal-inner">
+<div class="modal-header">
+<span>Добавить штрихкод в базу кросскодов</span>
+<button class="modal-close-x" id="bcAddCloseX">✕</button>
+</div>
+<div class="modal-body" style="flex:1;">
+<div class="modal-field"><label for="bcAddMainBC">Главный штрихкод</label><div class="bc-main-row"><input class="input-readonly" id="bcAddMainBC" readonly=""/><button class="btn btn-yandex" id="bcYandexMainBtn" title="Найти товар на Яндексе"><svg fill="#FF0000" height="14" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg"><path d="M12.87 13.32L16.5 5h-2.22l-2.07 5.46L10.17 5H7.95l3.24 8.32L7.95 19h2.22l2.13-5.56L14.43 19h2.22z"></path><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 1.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17z"></path></svg></button></div><span class="hint">Штрихкод из вашего прайса</span></div>
+<div class="modal-field"><label for="bcAddName">Название товара</label><input id="bcAddName" placeholder="Введите или отредактируйте..."/></div>
+<div class="bc-modal-suppliers"><div class="bc-modal-suppliers-title">Штрихкоды поставщиков (кросскоды)</div><div id="bcAddSynList"></div></div>
+</div>
+<div class="modal-footer">
+<button class="btn" id="bcAddCancelBtn">Отмена</button>
+<button class="btn btn-success" id="bcAddSaveBtn"><i data-lucide="save"></i> Сохранить в базу</button>
+</div>
+</div>
+</div>
+<!-- ═══ OBREZATEL MODALS ═══ -->
+<!-- Templates/Columns modal -->
+<div class="obr-modal" id="obrTemplatesModal">
+<div class="obr-modal-box">
+<div class="obr-modal-titlebar">
+<span style="display:flex;align-items:center;gap:8px;">
+        Названия колонок
+        <span class="col-settings-source-badge col-settings-source-badge--demo" id="colSettingsSourceBadge">демо-данные</span>
+</span>
+<button class="modal-close-x" id="obrCloseTemplatesModal">✕</button>
+</div>
+<div class="obr-modal-body">
+<!-- Инструкция по названиям колонок -->
+<div class="instr-why-block--sm">
+<div class="instr-block-title--mb8">Как называть колонки в прайсах для автоопределения</div>
+<div class="instr-body-text--mb10">Программа определяет тип колонки по ключевым словам в её заголовке. Если ваша колонка называется нестандартно — добавьте её название как кросскод к нужному типу в списке ниже. После сохранения JSON это запомнится навсегда.</div>
+<div class="instr-steps-list--md">
+<div class="instr-col-card">
+<div class="instr-col-card-title">Штрихкод</div>
+<div class="instr-body-text--muted">Колонка должна содержать в названии слова: <b>штрихкод, штрих-код, barcode, ean, шк, код, артикул, sku</b>. Это главная колонка для сопоставления товаров — без неё файл не передастся в мониторинг. Если поставщик называет её «Код товара», «EAN13», «Артикул поставщика» — добавьте эти слова как кросскоды.</div>
+</div>
+<div class="instr-col-card">
+<div class="instr-col-card-title">Наименование</div>
+<div class="instr-body-text--muted">Колонка должна содержать: <b>название, наименование, name, товар, продукт, описание, title</b>. Используется для отображения в таблице мониторинга и для поиска кросскодов по наименованию. Если у поставщика колонка называется «Описание товара» или «Номенклатура» — добавьте эти слова.</div>
+</div>
+<div class="instr-col-card">
+<div class="instr-col-card-title">Цена</div>
+<div style="font-size:var(--fz-sm);color:var(--text-secondary);line-height:1.6;margin-bottom:6px;">Колонка с ценой <b>обязательно должна содержать слово «цена»</b> или одно из: <b>price, стоимость, прайс, опт, розн, ррц, рц, retail, wholesale</b>. Можно выбрать несколько ценовых колонок — каждая станет отдельным столбцом в мониторинге.</div>
+<div class="instr-warn-box">
+<b>Нал и безнал:</b> чтобы программа разделила цены по типу оплаты, назовите колонки так, чтобы в названии было слово <b>«нал»</b> или <b>«бн»</b> (безнал). Например: «Цена нал», «Цена бн», «Нал», «Безнал». Минимальная цена будет искаться раздельно для каждой группы. Если у вас одна цена — просто назовите колонку «Цена».
+            </div>
+</div>
+<div class="instr-col-card">
+<div class="instr-col-card-title">Остаток</div>
+<div class="instr-body-text--muted">Колонка с количеством на складе. Распознаётся по словам: <b>остаток, остатки, наличие, склад</b>. Отображается в таблице мониторинга рядом с ценой. Если у поставщика написано «Кол-во», «В наличии» — добавьте эти слова как кросскоды к типу «Остаток».</div>
+</div>
+<div class="instr-col-card">
+<div class="instr-col-card-title--muted">В пути (необязательно)</div>
+<div class="instr-body-text--muted">Товары в транзите. Распознаётся по словам: <b>в пути, транзит, transit</b>. Отображается информационно, в сравнении цен не участвует.</div>
+</div>
+</div>
+</div>
+<!-- Демо-баннер -->
+<div class="banner--amber" id="colSettingsDemoBanner">
+        <b>Демо-данные.</b> Сейчас отображается встроенный набор колонок. При сохранении JSON они запишутся в файл автоматически — в следующий раз загрузите этот файл и ваши настройки восстановятся.
+      </div>
+<div id="colSettingsFileBanner" style="display:none;background:var(--green-bg);border:1px solid #A7F3D0;border-radius:var(--radius-md);padding:9px 14px;margin-bottom:12px;font-size:var(--fz-md);color:var(--green-dark);line-height:1.5;">
+        <b>Настройки из файла.</b> Загружены из вашего JSON. Изменения будут сохранены при следующем сохранении JSON.
+      </div>
+<div class="instr-note-block">
+        Добавьте новое название колонки ниже — оно появится в выпадающем списке при разметке прайса. У каждого названия есть <b>кросскоды</b> — слова по которым это название ищется автоматически в заголовках файлов. Стрелки ↑↓ меняют порядок и приоритет при автоопределении.
+      </div>
+<div class="tpl-add">
+<input id="obrNewTemplateInput" placeholder="Название новой колонки, например: Артикул" type="text"/>
+<button class="btn btn-success" id="obrAddTemplateBtn"><i data-lucide="plus"></i> Добавить</button>
+</div>
+<div id="obrTemplatesList"></div>
+</div>
+</div>
+</div>
+<!-- Skipped rows modal -->
+<div class="obr-modal" id="obrSkippedModal">
+<div class="obr-modal-box">
+<div class="obr-modal-titlebar">
+<span>Пропущенные строки</span>
+<button class="modal-close-x" id="obrCloseSkippedModal">✕</button>
+</div>
+<div class="obr-modal-body">
+<div class="skipped-sum" id="obrSkippedSummary"></div>
+<div class="skipped-wrap"><table class="skipped-table" id="obrSkippedTable"></table></div>
+<p class="skipped-note">CSV будет скачан даже при наличии пропусков.</p>
+</div>
+<div class="obr-modal-footer">
+<button class="btn" id="obrDownloadSkippedBtn"><i data-lucide="list"></i> Показать все пропуски</button>
+<button id="obrConfirmDownloadCsvBtn" style="display:none;"></button>
+</div>
+</div>
+</div>
+<!-- BRAND ADD MODAL -->
+<div class="modal-overlay" id="brandAddModal" style="z-index:10010;">
+<div class="modal-inner w560">
+<div class="modal-header">
+<span>Добавить новый бренд</span>
+<button class="modal-close-x" id="brandAddModalCloseX">✕</button>
+</div>
+<div class="modal-body">
+<div class="modal-field modal-field--blue">
+<label for="brNCanon">Канонический бренд <span class="text-red">*</span></label>
+<input autocomplete="off" id="brNCanon" placeholder="например: tchibo"/>
+<span class="hint">Главное написание — ключ в словаре</span>
+<div id="brNCanonExistHint" style="display:none;margin-top:4px;padding:7px 11px;background:#EFF6FF;border:1px solid #BFDBFE;border-left:3px solid var(--accent);border-radius:4px;font-size:11px;color:#1E3A5F;line-height:1.5;"></div>
+</div>
+<div class="modal-field modal-field--blue" style="margin-top:8px;">
+<label for="brNSyns">Кросскоды (через запятую)</label>
+<textarea id="brNSyns" placeholder="чибо, тибио, tchibo coffee" rows="3"></textarea>
+</div>
+<div class="modal-field modal-field--red" style="margin-top:8px;">
+<label for="brNAnti">Антонимы (через запятую)</label>
+<textarea id="brNAnti" placeholder="нескафе, якобс, монарх" rows="3"></textarea>
+</div>
+<span id="brandFormError" style="color:var(--red);font-size:12px;display:none;"></span>
+</div>
+<div class="modal-footer">
+<button class="btn btn-danger" id="brandClearFormBtn"><i data-lucide="x"></i> Очистить</button>
+<button class="btn" id="brandAddModalCancel">Отмена</button>
+<button class="btn btn-success" id="brandAddBtn"><i data-lucide="save"></i> Сохранить бренд</button>
+</div>
+</div>
+</div>
+<!-- ═══ SCRIPTS ═══ -->
+<!-- ═══ PM APP LOGIC ═══ -->
+<!-- ═══ NEXT-STEP MODAL (after OBR save) ═══ -->
+<div id="obrNextStepModal">
+<div class="modal-inner modal-w480">
+<div class="modal-header modal-header--spread">
+<div style="display:flex;align-items:center;gap:8px;">
+  <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:var(--green-bg);border:1px solid #A7F3D0;border-radius:50%;flex-shrink:0;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </span>
+  <span class="modal-title-bold" id="obrNextStepTitle">Файл сохранён!</span>
+</div>
+<button class="modal-close-x" onclick="obrCloseNextStep()">✕</button>
+</div>
+<div class="modal-body">
+<p class="modal-sub-text" id="obrNextStepSub"></p>
+<div class="obr-nextstep-btns" id="obrNextStepBtns"></div>
+</div>
+</div>
+</div>
+<!-- ═══ COMBINED NAV + APPBRIDGE + OBR ═══ -->
+<!-- ═══ PM MAIN UI LOGIC ═══ -->
+</div><!-- /app-main -->
+</div><!-- /app-layout -->
+<!-- CONFIRM CLEAR MODAL -->
+<div id="confirmClearModal" style="position:fixed;inset:0;background:rgba(0,0,0,0);display:none;align-items:center;justify-content:center;z-index:9999;">
+<div class="confirm-modal-box">
+<div class="confirm-modal-icon"><i data-lucide="alert-triangle"></i></div>
+<div class="confirm-modal-title">Сбросить все данные?</div>
+<div class="confirm-modal-text">Это удалит все загруженные прайсы, базу кросскодов и результаты матчинга. Действие нельзя отменить.</div>
+<div class="confirm-modal-actions">
+<button class="confirm-btn-cancel" id="confirmClearCancel">Отмена</button>
+<button class="confirm-btn-ok" id="confirmClearOk">Да, сбросить</button>
+</div>
+</div>
+</div>
+<!-- ═══ FEATURES: DELTA FILTER + MATCHER HISTORY + STICKY FILTERS ═══ -->
+<!-- ===== CART QTY MODAL ===== -->
+<div id="cartQtyModal" onclick="if(event.target===this)closeCartQtyModal()">
+<div class="cart-qty-box" id="cartQtyBox">
+<div class="cq-header">
+<span class="cq-header-icon"><i data-lucide="shopping-cart"></i></span>
+<span class="cq-supplier" id="cqSupplier"></span>
+<button class="cq-close" onclick="closeCartQtyModal()">✕</button>
+</div>
+<div class="cq-body">
+<div class="cq-product">
+<div class="cq-name" id="cqName"></div>
+<div class="cq-meta">
+<span class="cq-barcode" id="cqBarcode"></span>
+<span class="cq-price" id="cqPrice"></span>
+</div>
+</div>
+<!-- price warning -->
+<div class="cq-warn" id="cqPriceWarn" style="display:none"></div>
+<!-- division needed warning -->
+<div id="cqDivNeeded" style="display:none;background:#FEF3C7;border:1px solid #FDE68A;border-left:3px solid #F59E0B;border-radius:4px;padding:7px 11px;font-size:11px;color:#78350F;line-height:1.5;margin-bottom:2px;">
+        У этого товара цена, похоже, указана <b>за блок/упаковку</b>, а не за штуку.<br/>
+        Чтобы считалось верно — разделите цену вручную через кнопку <b>÷</b> в таблице,<br/>
+        или выберите размер блока ниже (тогда деление применится только для этого заказа).
+      </div>
+<!-- block hint -->
+<div class="cq-block-badge" id="cqDivHint" style="display:none"></div>
+<!-- pack size selector (shown when ambiguous detection) -->
+<div id="cqPackSelect" style="display:none">
+<span class="cqs-label">Размер блока</span>
+<div class="cqs-btns" id="cqsButtons"></div>
+</div>
+<!-- qty picker -->
+<div class="cq-qty-section">
+<div class="cq-qty-header">
+<span class="cq-qty-label" id="cqQtyLabel">Количество</span>
+<span class="cq-selected-pill" id="cqSelectedPill">1</span>
+</div>
+<!-- manual input row -->
+<div class="cq-manual-row">
+<button class="cq-manual-btn" onclick="cqManualStep(-1)">−</button>
+<input class="cq-manual-input" id="cqManualInput" min="1" oninput="cqManualChange()" onkeydown="if(event.key==='Enter')confirmCartQty()" step="1" type="number" value="1"/>
+<button class="cq-manual-btn" onclick="cqManualStep(1)">+</button>
+<span class="cq-manual-hint cq-hint-text" id="cqManualHint">шт.</span>
+</div>
+<!-- manual tip: shown only in block mode -->
+<div id="cqManualTip" style="display:none;font-size:10px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:4px 9px;margin:2px 0 0;">
+          Кратность неверная? Введите нужное число выше — добавится штуками.
+        </div>
+<!-- chip grid -->
+<div class="cq-chips-wrap">
+<div class="cq-chips" id="cqChips"></div>
+</div>
+</div>
+</div>
+<!-- hidden value holder -->
+<input id="cartQtyInput" type="hidden" value="1"/>
+<!-- footer -->
+<div class="cq-footer">
+<button class="btn btn-secondary" onclick="closeCartQtyModal()" style="flex:1;">Отмена</button>
+<button class="btn btn-success" onclick="confirmCartQty()" style="flex:2;"><i data-lucide="shopping-cart"></i> В корзину</button>
+</div>
+</div>
+</div>
+<!-- ===== CART MODAL ===== -->
+<div id="cartModal">
+<div class="cart-modal-box">
+<div class="cart-modal-header">
+<span class="cart-modal-title">Корзина заказов</span>
+<div class="cart-modal-actions">
+<button class="btn" id="cartMyPriceBtn" onclick="applyMyPriceToCart()" style="display:none;background:#EFF6FF;border-color:#3B6FD4;color:#1E3A5F;font-weight:600;" title="Подставить наименования и штрихкоды из вашего прайс-листа"><i data-lucide="tag"></i> Свой прайс</button>
+<button class="btn" id="cartMyPriceCancelBtn" onclick="cancelMyPriceFromCart()" style="display:none;background:#FEF2F2;border-color:#FCA5A5;color:#991B1B;" title="Убрать замену на мой прайс"><i data-lucide="x"></i> Сбросить мой прайс</button>
+<button class="btn btn-success" onclick="downloadCartExcel()"><i data-lucide="save"></i> Скачать Excel</button>
+<button class="btn btn-danger" onclick="clearCart()"><i data-lucide="trash-2"></i> Очистить</button>
+<button class="modal-close-x" onclick="closeCartModal()">✕</button>
+</div>
+</div>
+<div class="cart-modal-body" id="cartModalBody"></div>
+<div class="cart-modal-footer" id="cartModalFooter" style="display:none"></div>
+</div>
+</div>
+<!-- ═══ CATEGORY EXCLUSIONS MODAL ═══ -->
+<div id="catExclModal">
+<div class="cem-box">
+<!-- HEADER -->
+<div class="cem-header">
+<div class="cem-header-icon"><i data-lucide="tag"></i></div>
+<div class="cem-header-text">
+<h3>Слова-категории</h3>
+<p>Белый список слов для фильтра «Категории» — если пуст, показываются все частые слова</p>
+</div>
+<button class="cem-close" onclick="document.getElementById('catExclModal').style.display='none'">✕</button>
+</div>
+<!-- BODY -->
+<div class="cem-body">
+<!-- LEFT: selected words -->
+<div class="cem-left">
+<div class="cem-left-head">
+<div class="cem-left-label">
+<span>Выбрано <span class="text-accent-bold" id="catExclSelectedCount"></span></span>
+<button id="catExclClearBtn" onmouseout="this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-strong)'" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" style="display:none;padding:2px 8px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface);color:var(--text-secondary);font-size:var(--fz-xs);cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:background 100ms,color 100ms;">✕ Сбросить</button>
+</div>
+</div>
+<div class="cem-chips-wrap">
+<div id="catExclCurrentList"></div>
+</div>
+<div class="cem-legend">
+<div class="cem-legend-row"><div class="cem-legend-dot" style="background:var(--accent);"></div> Выбрано вами</div>
+<div class="cem-legend-row"><div class="cem-legend-dot" style="background:#93C5FD;"></div> Синоним выбранного</div>
+<div class="cem-legend-row"><div class="cem-legend-dot" style="background:var(--amber);"></div> Конфликт с антонимами</div>
+</div>
+</div>
+<!-- RIGHT: word cloud -->
+<div class="cem-right">
+<div class="cem-search-bar">
+<div class="cem-search-wrap">
+<span class="cem-search-icon"><i data-lucide="search"></i></span>
+<input class="cem-search-inp" id="catExclSearchInp" oninput="_catExclFilterWords(this.value)" placeholder="Фильтр слов..." type="text"/>
+</div>
+</div>
+<div class="cem-words-header">
+<span class="cem-words-label">Частые слова из прайсов</span>
+<span class="cem-words-count" id="catExclWordsCount"></span>
+</div>
+<div class="cem-wordlist" id="catExclWordList"></div>
+</div>
+</div>
+<!-- FOOTER -->
+<div class="cem-footer">
+<span class="cem-footer-note">Сохраняется в файл памяти JSON · Синонимы подключаются автоматически из базы брендов</span>
+<button class="btn" onclick="document.getElementById('catExclModal').style.display='none'"><i data-lucide="x"></i> Закрыть</button>
+</div>
+</div>
+</div>
+<!-- ═══ HELP MODAL ═══ -->
+<div id="helpModal" class="help-modal-overlay" onclick="if(event.target===this)closeHelpModal()">
+  <div class="help-modal-box">
+    <div class="help-modal-header">
+      <div class="help-modal-title-row">
+        <span class="help-modal-icon"><i data-lucide="book-open"></i></span>
+        <span id="helpModalTitle">Инструкция</span>
+      </div>
+      <button class="modal-close-x" onclick="closeHelpModal()" title="Закрыть">✕</button>
+    </div>
+    <div class="help-modal-body" id="helpModalBody"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<!-- ═══ PWA ═══ -->
+<script>
+let _pwaPrompt = null;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+if (!isStandalone) {
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _pwaPrompt = e;
+    const btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.style.display = 'flex';
+  });
+}
+
+window.pwaInstall = async function () {
+  if (!_pwaPrompt) return;
+  try {
+    const { outcome } = await _pwaPrompt.prompt();
+    if (outcome === 'accepted') {
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.style.display = 'none';
+      _pwaPrompt = null;
+    }
+  } catch(e) {
+    console.warn('[PWA] prompt error:', e);
+  }
+};
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'none';
+  _pwaPrompt = null;
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => {
+        console.log('[PWA] Service Worker зарегистрирован:', reg.scope);
+        reg.addEventListener('updatefound', () => {
+          const w = reg.installing;
+          w.addEventListener('statechange', () => {
+            if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdateToast();
+          });
+        });
+      })
+      .catch(err => console.warn('[PWA] SW не зарегистрирован:', err));
+  });
+}
+
+function showUpdateToast() {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#3B6FD4;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:99999;display:flex;align-items:center;gap:12px;font-family:Inter,sans-serif;font-size:14px';
+  t.innerHTML =
+    '<span>Доступна новая версия</span>' +
+    '<button onclick="location.reload()" style="background:#fff;color:#3B6FD4;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-weight:600;font-size:13px">Обновить</button>' +
+    '<button onclick="this.parentElement.remove()" style="background:transparent;color:#fff;border:none;cursor:pointer;font-size:18px;line-height:1;padding:0 4px">×</button>';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 15000);
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script>
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+    // Re-run after app.js in case DOM was mutated
+    window.addEventListener('load', function() { lucide.createIcons(); });
+  }
+</script>
+<!-- ═══ FEEDBACK MODAL ═══ -->
+<div id="feedbackModal" class="modal-overlay" style="z-index:10050;" onclick="if(event.target===this)window.closeFeedbackModal()">
+  <div class="modal-inner w560">
+    <div class="modal-header">
+      <span>Написать автору</span>
+      <button class="modal-close-x" onclick="window.closeFeedbackModal()">✕</button>
+    </div>
+    <div class="modal-body" style="gap:10px;">
+      <div class="modal-field">
+        <label>Ваш контакт (телефон, email или Telegram)</label>
+        <input id="feedbackContact" type="text" placeholder="+7 900... / mail@... / @username"/>
+      </div>
+      <div class="modal-field">
+        <label>Сообщение</label>
+        <textarea id="feedbackText" placeholder="Опишите вопрос, пожелание или проблему..." style="min-height:110px;resize:vertical;"></textarea>
+      </div>
+      <div class="modal-field">
+        <label>Изображение (необязательно)</label>
+        <div id="feedbackImgWrap">
+          <label id="feedbackImgLabel" class="feedback-img-pick">
+            <i data-lucide="image-plus" style="width:14px;height:14px;"></i>
+            <span>Прикрепить изображение</span>
+            <input id="feedbackImgInput" type="file" accept="image/*" style="display:none;" onchange="window._feedbackImgChange(this)"/>
+          </label>
+          <div id="feedbackImgPreview" style="display:none;position:relative;margin-top:6px;">
+            <img id="feedbackImgThumb" style="max-height:120px;max-width:100%;border-radius:var(--radius-md);border:1px solid var(--border);display:block;"/>
+            <button onclick="window._feedbackImgClear()" class="feedback-img-clear" title="Удалить">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="window.closeFeedbackModal()">Отмена</button>
+      <button class="btn btn-success" id="feedbackSendBtn" onclick="window._feedbackSend()">
+        <i data-lucide="send" style="width:13px;height:13px;"></i> Отправить
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ═══ MOBILE JS ═══ -->
+<script>
+(function () {
+  var sidebar = document.querySelector('.app-sidebar');
+  var overlay = document.getElementById('mobileOverlay');
+  var topTitle = document.getElementById('mobileTopBarTitle');
+
+  function isMobile() { return window.innerWidth <= 768; }
+
+  /* ── Sidebar drawer ── */
+  window.toggleMobileSidebar = function () {
+    if (!isMobile()) return;
+    var open = sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('active', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  };
+  window.closeMobileSidebar = function () {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  /* Close + update title on nav tap */
+  document.querySelectorAll('.nav-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var lbl = btn.getAttribute('data-label');
+      if (lbl && topTitle) topTitle.textContent = lbl;
+      if (isMobile()) closeMobileSidebar();
+    });
+  });
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileSidebar(); });
+  window.addEventListener('resize', function () { if (!isMobile()) closeMobileSidebar(); });
+
+  /* ── Desktop hint popup ── */
+  var HINT_KEY = 'pm_desktop_hint_dismissed';
+
+  window.closeDesktopHint = function (forever) {
+    var el = document.getElementById('desktopHintPopup');
+    if (!el) return;
+    if (forever) {
+      try { localStorage.setItem(HINT_KEY, '1'); } catch (e) {}
+    }
+    el.classList.remove('show');
+  };
+
+  function maybeShowHint() {
+    if (!isMobile()) return;
+    try { if (localStorage.getItem(HINT_KEY)) return; } catch (e) {}
+    var el = document.getElementById('desktopHintPopup');
+    if (!el) return;
+    setTimeout(function () { el.classList.add('show'); }, 600);
+  }
+
+  /* Show after page fully loaded */
+  if (document.readyState === 'complete') {
+    maybeShowHint();
+  } else {
+    window.addEventListener('load', maybeShowHint);
+  }
+})();
+</script>
+</body>
+</html>
